@@ -57,14 +57,10 @@ declare namespace API {
     new_password: string;
   };
 
-  // 获取用户列表参数
+  // 获取用户列表参数（基于swagger.json定义）
   type GetUserListParams = {
     page?: number;
     limit?: number;
-    username?: string;
-    email?: string;
-    role?: string;
-    is_active?: boolean;
   };
 
   // 分页信息
@@ -80,20 +76,23 @@ declare namespace API {
     pagination: Pagination;
   };
 
-  // 创建用户请求
-  type CreateUserRequest = {
+  // 管理员创建用户请求
+  type AdminCreateUserRequest = {
     username: string;
     password: string;
     email: string;
-    role: string;
+    role: 'user' | 'admin';
+  };
+
+  // 管理员更新用户请求
+  type AdminUpdateUserRequest = {
+    email?: string;
+    role?: 'user' | 'admin';
     is_active?: boolean;
   };
 
-  // 更新用户请求
-  type UpdateUserRequest = {
-    username?: string;
-    email?: string;
-    role?: string;
-    is_active?: boolean;
+  // 管理员重置密码请求
+  type AdminResetPasswordRequest = {
+    new_password: string;
   };
 }

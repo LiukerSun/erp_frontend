@@ -9,6 +9,7 @@ interface UserFormProps {
   onSuccess: () => void;
   user?: API.UserInfo;
   title: string;
+  isCurrentUser?: boolean;
 }
 
 const UserForm: React.FC<UserFormProps> = ({
@@ -17,6 +18,7 @@ const UserForm: React.FC<UserFormProps> = ({
   onSuccess,
   user,
   title,
+  isCurrentUser = false,
 }) => {
   const handleSubmit = async (values: any) => {
     try {
@@ -32,9 +34,8 @@ const UserForm: React.FC<UserFormProps> = ({
           return false;
         }
       } else {
-        // 新增用户 - 自动设置角色为普通用户，状态为活跃
-        const createData = { ...values, role: 'user', is_active: true };
-        const response = await createUser(createData);
+        // 新增用户
+        const response = await createUser(values);
         if (response.success) {
           message.success('用户创建成功');
           onSuccess();
@@ -59,10 +60,7 @@ const UserForm: React.FC<UserFormProps> = ({
       modalProps={{
         destroyOnClose: true,
       }}
-      initialValues={user ? { 
-        ...user, 
-        role: user.role === 'admin' ? '管理员' : '普通用户' 
-      } : {}}
+      initialValues={user || { role: 'user', is_active: true }}
     >
       <ProFormText
         name="username"
@@ -71,7 +69,7 @@ const UserForm: React.FC<UserFormProps> = ({
         rules={[
           { required: true, message: '请输入用户名' },
           { min: 3, message: '用户名至少3个字符' },
-          { max: 20, message: '用户名最多20个字符' },
+          { max: 50, message: '用户名最多50个字符' },
         ]}
         disabled={!!user?.id} // 编辑时用户名不可修改
       />
@@ -98,18 +96,31 @@ const UserForm: React.FC<UserFormProps> = ({
         ]}
       />
 
-{/* 新增用户时角色自动设为普通用户，编辑时显示当前角色但不可修改 */}
-      {user?.id && (
-        <ProFormText
-          name="role"
-          label="角色"
-          disabled
-          tooltip="角色不可修改"
-          transform={(value) => ({ role: value === 'admin' ? '管理员' : '普通用户' })}
-        />
-      )}
+      <ProFormSelect
+        name="role"
+        label="角色"
+        placeholder="请选择角色"
+        options={[
+          { label: '普通用户', value: 'user' },
+          { label: '管理员', value: 'admin' },
+        ]}
+        rules={[{ required: true, message: '请选择角色' }]}
+        disabled={isCurrentUser}
+        tooltip={isCurrentUser ? '不能修改自己的角色' : undefined}
+      />
 
-{/* 用户默认都是活跃状态，不需要选择 */}
+      <ProFormSelect
+        name="is_active"
+        label="状态"
+        placeholder="请选择状态"
+        options={[
+          { label: '活跃', value: true },
+          { label: '禁用', value: false },
+        ]}
+        rules={[{ required: true, message: '请选择状态' }]}
+        disabled={isCurrentUser}
+        tooltip={isCurrentUser ? '不能禁用自己的账户' : undefined}
+      />
     </ModalForm>
   );
 };

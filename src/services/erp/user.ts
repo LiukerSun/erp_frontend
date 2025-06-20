@@ -64,18 +64,18 @@ export async function changePassword(
   });
 }
 
-/** 获取用户列表 GET /api/user/list */
+/** 管理员获取用户列表 GET /api/user/admin/users */
 export async function getUserList(params: API.GetUserListParams, options?: { [key: string]: any }) {
-  return request<API.BaseResponse<API.UserListResponse>>('/api/user/list', {
+  return request<API.BaseResponse<API.UserListResponse>>('/api/user/admin/users', {
     method: 'GET',
     params: { ...params },
     ...(options || {}),
   });
 }
 
-/** 创建用户 POST /api/user/register */
-export async function createUser(body: API.CreateUserRequest, options?: { [key: string]: any }) {
-  return request<API.BaseResponse<API.UserResponse>>('/api/user/register', {
+/** 管理员创建用户 POST /api/user/admin/users */
+export async function createUser(body: API.AdminCreateUserRequest, options?: { [key: string]: any }) {
+  return request<API.BaseResponse<API.UserResponse>>('/api/user/admin/users', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -85,13 +85,13 @@ export async function createUser(body: API.CreateUserRequest, options?: { [key: 
   });
 }
 
-/** 更新用户 PUT /api/user/update/:id */
+/** 管理员更新用户 PUT /api/user/admin/users/:id */
 export async function updateUser(
   id: number,
-  body: API.UpdateUserRequest,
+  body: API.AdminUpdateUserRequest,
   options?: { [key: string]: any },
 ) {
-  return request<API.BaseResponse<API.UserResponse>>(`/api/user/update/${id}`, {
+  return request<API.BaseResponse<API.UserResponse>>(`/api/user/admin/users/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -101,18 +101,26 @@ export async function updateUser(
   });
 }
 
-/** 删除用户 DELETE /api/user/delete/:id */
+/** 管理员删除用户 DELETE /api/user/admin/users/:id */
 export async function deleteUser(id: number, options?: { [key: string]: any }) {
-  return request<API.BaseResponse<string>>(`/api/user/delete/${id}`, {
+  return request<API.BaseResponse<string>>(`/api/user/admin/users/${id}`, {
     method: 'DELETE',
     ...(options || {}),
   });
 }
 
-/** 切换用户状态 PUT /api/user/toggle_status/:id */
-export async function toggleUserStatus(id: number, options?: { [key: string]: any }) {
-  return request<API.BaseResponse<API.UserResponse>>(`/api/user/toggle_status/${id}`, {
-    method: 'PUT',
+/** 管理员重置用户密码 POST /api/user/admin/users/:id/reset_password */
+export async function resetUserPassword(
+  id: number,
+  body: API.AdminResetPasswordRequest,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponse<string>>(`/api/user/admin/users/${id}/reset_password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
     ...(options || {}),
   });
 }

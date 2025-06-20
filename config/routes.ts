@@ -37,19 +37,25 @@ export default [
     path: '/user-management',
     name: 'user-management',
     icon: 'user',
+    access: 'admin',
     routes: [
+      {
+        path: '/user-management',
+        redirect: '/user-management/list',
+      },
       {
         name: 'user-list',
         path: '/user-management/list',
         component: './User/List',
-        access: 'admin',
-      },
-      {
-        name: 'user-profile',
-        path: '/user-management/profile',
-        component: './User/Profile',
       },
     ],
+  },
+  // 个人资料页面，不在左侧菜单显示
+  {
+    path: '/account/center',
+    name: 'profile',
+    component: './User/Profile',
+    hideInMenu: true,
   },
   {
     path: '/',

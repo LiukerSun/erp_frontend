@@ -64,7 +64,19 @@ const UserProfile: React.FC = () => {
   };
 
   return (
-    <PageContainer>
+    <PageContainer
+      breadcrumb={{
+        items: [
+          {
+            title: '首页',
+            href: '/welcome',
+          },
+          {
+            title: '个人中心',
+          },
+        ],
+      }}
+    >
       <Card title="个人资料" loading={loading}>
         {userInfo && (
           <ProForm
