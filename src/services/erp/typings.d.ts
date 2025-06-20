@@ -143,4 +143,70 @@ declare namespace API {
     page?: number;
     limit?: number;
   };
+
+  // ========== 分类相关类型定义 ==========
+
+  // 分类信息
+  type CategoryInfo = {
+    id: number;
+    name: string;
+    description?: string;
+    parent_id?: number;
+    level: number;
+    sort: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+  };
+
+  // 树状分类信息
+  type CategoryTreeInfo = CategoryInfo & {
+    children?: CategoryTreeInfo[];
+  };
+
+  // 分类响应（包含在BaseResponse中）
+  type CategoryResponse = CategoryInfo;
+
+  // 获取分类列表参数
+  type GetCategoryListParams = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    parent_id?: number;
+    is_active?: boolean;
+  };
+
+  // 分类列表响应
+  type CategoryListResponse = {
+    categories: CategoryInfo[];
+    pagination: Pagination;
+  };
+
+  // 分类树列表响应
+  type CategoryTreeListResponse = {
+    categories: CategoryTreeInfo[];
+  };
+
+  // 创建分类请求
+  type CreateCategoryRequest = {
+    name: string;
+    description?: string;
+    parent_id?: number;
+    sort?: number;
+    is_active?: boolean;
+  };
+
+  // 更新分类请求
+  type UpdateCategoryRequest = {
+    name?: string;
+    description?: string;
+    parent_id?: number;
+    sort?: number;
+    is_active?: boolean;
+  };
+
+  // 移动分类请求
+  type MoveCategoryRequest = {
+    parent_id?: number;
+  };
 }

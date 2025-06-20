@@ -11,24 +11,24 @@ import { errorConfig } from './requestErrorConfig';
 if (process.env.NODE_ENV === 'development') {
   const originalError = console.error;
   const originalWarn = console.warn;
-  
-  console.error = function(...args) {
+
+  console.error = function (...args) {
     const message = args[0];
-    if (typeof message === 'string' && (
-      message.includes('findDOMNode is deprecated') ||
-      message.includes('Warning: findDOMNode')
-    )) {
+    if (
+      typeof message === 'string' &&
+      (message.includes('findDOMNode is deprecated') || message.includes('Warning: findDOMNode'))
+    ) {
       return;
     }
     originalError.apply(console, args);
   };
-  
-  console.warn = function(...args) {
+
+  console.warn = function (...args) {
     const message = args[0];
-    if (typeof message === 'string' && (
-      message.includes('findDOMNode is deprecated') ||
-      message.includes('Warning: findDOMNode')
-    )) {
+    if (
+      typeof message === 'string' &&
+      (message.includes('findDOMNode is deprecated') || message.includes('Warning: findDOMNode'))
+    ) {
       return;
     }
     originalWarn.apply(console, args);
@@ -85,8 +85,12 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
   return {
     actionsRender: () => [<Question key="doc" />, <SelectLang key="SelectLang" />],
     avatarProps: {
-      render: (_: any, avatarChildren: any) => {
-        return <AvatarDropdown menu={true}><AvatarName /></AvatarDropdown>;
+      render: () => {
+        return (
+          <AvatarDropdown menu={true}>
+            <AvatarName />
+          </AvatarDropdown>
+        );
       },
     },
     waterMarkProps: {
@@ -101,6 +105,12 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
       }
     },
     menuHeaderRender: undefined,
+    // 防止菜单自动收缩
+    onCollapse: () => false,
+    // 配置菜单属性，禁用手风琴模式
+    menu: {
+      autoClose: false,
+    },
     // 自定义 403 页面
     // unAccessible: <div>unAccessible</div>,
     // 增加一个 loading 的状态

@@ -66,6 +66,22 @@ export default [
       },
     ],
   },
+  {
+    path: '/category-management',
+    name: 'category-management',
+    icon: 'cluster',
+    routes: [
+      {
+        path: '/category-management',
+        redirect: '/category-management/list',
+      },
+      {
+        name: 'category-list',
+        path: '/category-management/list',
+        component: './Category/List',
+      },
+    ],
+  },
   // 个人资料页面，不在左侧菜单显示
   {
     path: '/account/center',

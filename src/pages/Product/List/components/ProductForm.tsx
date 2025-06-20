@@ -1,7 +1,8 @@
+import { getCategoryTree } from '@/services/erp/category';
 import { createProduct, updateProduct } from '@/services/erp/product';
-import { ModalForm, ProFormDigit, ProFormText } from '@ant-design/pro-components';
+import { ModalForm, ProFormText, ProFormTreeSelect } from '@ant-design/pro-components';
 import { message } from 'antd';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface ProductFormProps {
   visible: boolean;
@@ -18,6 +19,38 @@ const ProductForm: React.FC<ProductFormProps> = ({
   product,
   title,
 }) => {
+  const [categoryTreeData, setCategoryTreeData] = useState<any[]>([]);
+
+  // 将分类数据转换为TreeSelect需要的格式
+  const convertToTreeSelectData = (categories: API.CategoryTreeInfo[]): any[] => {
+    return categories.map((cat) => ({
+      title: cat.name,
+      value: cat.id,
+      key: cat.id,
+      disabled: !cat.is_active, // 禁用未启用的分类
+      children: cat.children ? convertToTreeSelectData(cat.children) : undefined,
+    }));
+  };
+
+  // 获取分类树数据
+  const fetchCategoryTree = async () => {
+    try {
+      const response = await getCategoryTree();
+      if (response.success) {
+        const treeData = convertToTreeSelectData(response.data.categories || []);
+        setCategoryTreeData(treeData);
+      }
+    } catch (error) {
+      console.error('获取分类树失败:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (visible) {
+      fetchCategoryTree();
+    }
+  }, [visible]);
+
   const handleSubmit = async (values: any) => {
     try {
       if (product?.id) {
@@ -71,16 +104,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
         ]}
       />
 
-      <ProFormDigit
+      <ProFormTreeSelect
         name="category_id"
-        label="分类ID"
-        placeholder="请输入分类ID"
-        rules={[{ required: true, message: '请输入分类ID' }]}
-        min={1}
-        precision={0}
+        label="产品分类"
+        placeholder="请选择产品分类"
+        rules={[{ required: true, message: '请选择产品分类' }]}
         fieldProps={{
-          style: { width: '100%' },
+          treeData: categoryTreeData,
+          allowClear: false,
+          showSearch: true,
+          treeDefaultExpandAll: true,
+          filterTreeNode: (input: string, treeNode: any) =>
+            treeNode.title?.toLowerCase().indexOf(input.toLowerCase()) >= 0,
         }}
+        tooltip="选择产品所属的分类"
       />
     </ModalForm>
   );

@@ -8,5 +8,7 @@ export default {
   'menu.user-management.user-profile': '个人资料',
   'menu.product-management': '产品管理',
   'menu.product-management.product-list': '产品列表',
+  'menu.category-management': '分类管理',
+  'menu.category-management.category-list': '分类列表',
   'menu.profile': '个人资料',
 };

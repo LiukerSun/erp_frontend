@@ -1,8 +1,9 @@
+import { getCategoryTree } from '@/services/erp/category';
 import { deleteProduct, getProductList } from '@/services/erp/product';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
 import { Button, message, Popconfirm, Tag } from 'antd';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ProductForm from './components/ProductForm';
 
 const ProductList: React.FC = () => {
@@ -10,6 +11,52 @@ const ProductList: React.FC = () => {
   const [productFormVisible, setProductFormVisible] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<API.ProductInfo | undefined>(undefined);
   const [formTitle, setFormTitle] = useState('');
+  const [categoryMap, setCategoryMap] = useState<Map<number, string>>(new Map());
+  const [categoryTreeData, setCategoryTreeData] = useState<any[]>([]);
+
+  // 获取分类数据并构建映射
+  const fetchCategories = async () => {
+    try {
+      const response = await getCategoryTree();
+      if (response.success) {
+        const map = new Map<number, string>();
+
+        const buildCategoryMap = (categories: API.CategoryTreeInfo[], parentPath = '') => {
+          categories.forEach((category) => {
+            const currentPath = parentPath ? `${parentPath} / ${category.name}` : category.name;
+            map.set(category.id, currentPath);
+            if (category.children && category.children.length > 0) {
+              buildCategoryMap(category.children, currentPath);
+            }
+          });
+        };
+
+        const buildTreeData = (categories: API.CategoryTreeInfo[]): any[] => {
+          return categories.map((category) => ({
+            title: category.name,
+            value: category.id,
+            key: category.id,
+            children:
+              category.children && category.children.length > 0
+                ? buildTreeData(category.children)
+                : undefined,
+          }));
+        };
+
+        buildCategoryMap(response.data.categories || []);
+        const tree = buildTreeData(response.data.categories || []);
+
+        setCategoryMap(map);
+        setCategoryTreeData(tree);
+      }
+    } catch (error) {
+      console.error('获取分类数据失败:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   // 打开新增产品表单
   const handleAdd = () => {
@@ -61,11 +108,22 @@ const ProductList: React.FC = () => {
       ellipsis: true,
     },
     {
-      title: '分类ID',
+      title: '产品分类',
       dataIndex: 'category_id',
-      width: 100,
+      width: 200,
+      valueType: 'treeSelect',
+      fieldProps: {
+        treeData: categoryTreeData,
+        placeholder: '选择分类筛选',
+        allowClear: true,
+        showSearch: true,
+        treeDefaultExpandAll: true,
+        filterTreeNode: (input: string, treeNode: any) =>
+          treeNode.title?.toLowerCase().indexOf(input.toLowerCase()) >= 0,
+      },
       render: (_, record) => {
-        return <Tag color="blue">{record.category_id}</Tag>;
+        const categoryName = categoryMap.get(record.category_id) || `分类ID: ${record.category_id}`;
+        return <Tag color="blue">{categoryName}</Tag>;
       },
     },
     {
