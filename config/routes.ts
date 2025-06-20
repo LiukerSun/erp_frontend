@@ -50,6 +50,22 @@ export default [
       },
     ],
   },
+  {
+    path: '/product-management',
+    name: 'product-management',
+    icon: 'shopping',
+    routes: [
+      {
+        path: '/product-management',
+        redirect: '/product-management/list',
+      },
+      {
+        name: 'product-list',
+        path: '/product-management/list',
+        component: './Product/List',
+      },
+    ],
+  },
   // 个人资料页面，不在左侧菜单显示
   {
     path: '/account/center',

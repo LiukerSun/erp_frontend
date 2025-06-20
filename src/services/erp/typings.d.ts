@@ -95,4 +95,52 @@ declare namespace API {
   type AdminResetPasswordRequest = {
     new_password: string;
   };
+
+  // ========== 产品相关类型定义 ==========
+
+  // 产品信息
+  type ProductInfo = {
+    id: number;
+    name: string;
+    category_id: number;
+    created_at: string;
+    updated_at: string;
+  };
+
+  // 产品响应（包含在BaseResponse中）
+  type ProductResponse = ProductInfo;
+
+  // 获取产品列表参数
+  type GetProductListParams = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    category_id?: number;
+  };
+
+  // 产品列表响应
+  type ProductListResponse = {
+    products: ProductInfo[];
+    pagination: Pagination;
+  };
+
+  // 创建产品请求
+  type CreateProductRequest = {
+    name: string;
+    category_id: number;
+  };
+
+  // 更新产品请求
+  type UpdateProductRequest = {
+    name?: string;
+    category_id?: number;
+  };
+
+  // 搜索产品参数
+  type SearchProductParams = {
+    name?: string;
+    category_id?: number;
+    page?: number;
+    limit?: number;
+  };
 }
