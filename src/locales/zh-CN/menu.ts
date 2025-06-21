@@ -10,5 +10,7 @@ export default {
   'menu.product-management.product-list': '产品列表',
   'menu.category-management': '分类管理',
   'menu.category-management.category-list': '分类列表',
+  'menu.attribute-management': '属性管理',
+  'menu.attribute-management.attribute-list': '属性列表',
   'menu.profile': '个人资料',
 };

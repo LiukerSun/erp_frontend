@@ -82,6 +82,22 @@ export default [
       },
     ],
   },
+  {
+    path: '/attribute-management',
+    name: 'attribute-management',
+    icon: 'setting',
+    routes: [
+      {
+        path: '/attribute-management',
+        redirect: '/attribute-management/list',
+      },
+      {
+        name: 'attribute-list',
+        path: '/attribute-management/list',
+        component: './Attribute/List',
+      },
+    ],
+  },
   // 个人资料页面，不在左侧菜单显示
   {
     path: '/account/center',

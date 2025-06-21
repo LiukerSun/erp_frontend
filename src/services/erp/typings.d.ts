@@ -209,4 +209,110 @@ declare namespace API {
   type MoveCategoryRequest = {
     parent_id?: number;
   };
+
+  // ========== 属性相关类型定义 ==========
+
+  // 属性类型枚举
+  type AttributeType =
+    | 'text'
+    | 'number'
+    | 'select'
+    | 'multi_select'
+    | 'boolean'
+    | 'date'
+    | 'datetime'
+    | 'url'
+    | 'email'
+    | 'color'
+    | 'currency';
+
+  // 属性选项
+  type AttributeOption = {
+    value: string;
+    label: string;
+    color?: string;
+    description?: string;
+    extra?: Record<string, any>;
+  };
+
+  // 验证规则
+  type ValidationRule = {
+    required?: boolean;
+    min?: number;
+    max?: number;
+    min_length?: number;
+    max_length?: number;
+    pattern?: string;
+    custom?: Record<string, any>;
+  };
+
+  // 属性信息
+  type AttributeInfo = {
+    id: number;
+    name: string;
+    display_name: string;
+    description?: string;
+    type: AttributeType;
+    is_required: boolean;
+    is_multiple: boolean;
+    is_active: boolean;
+    default_value?: string;
+    unit?: string;
+    sort: number;
+    options?: AttributeOption[];
+    validation?: ValidationRule;
+    created_at: string;
+    updated_at: string;
+  };
+
+  // 属性响应（包含在BaseResponse中）
+  type AttributeResponse = AttributeInfo;
+
+  // 获取属性列表参数
+  type GetAttributeListParams = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    type?: string;
+    is_active?: boolean;
+  };
+
+  // 属性列表响应
+  type AttributeListResponse = {
+    attributes: AttributeInfo[];
+    pagination: Pagination;
+  };
+
+  // 创建属性请求
+  type CreateAttributeRequest = {
+    name: string;
+    display_name: string;
+    description?: string;
+    type: AttributeType;
+    is_required?: boolean;
+    is_active?: boolean;
+    default_value?: string;
+    unit?: string;
+    sort?: number;
+    options?: AttributeOption[];
+    validation?: ValidationRule;
+  };
+
+  // 更新属性请求
+  type UpdateAttributeRequest = {
+    name?: string;
+    display_name?: string;
+    description?: string;
+    type?: AttributeType;
+    is_required?: boolean;
+    is_active?: boolean;
+    default_value?: string;
+    unit?: string;
+    sort?: number;
+    options?: AttributeOption[];
+    validation?: ValidationRule;
+  };
+
+  // 通用响应类型（兼容BaseResponse）
+  type Response<T = any> = BaseResponse<T>;
 }
