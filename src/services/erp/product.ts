@@ -80,3 +80,80 @@ export async function searchProducts(
     ...(options || {}),
   });
 }
+
+/** 获取产品详情（包含属性） GET /api/product/:id/with-attributes */
+export async function getProductWithAttributes(id: number, options?: { [key: string]: any }) {
+  return request<API.BaseResponse<API.ProductWithAttributesResponse>>(
+    `/api/product/${id}/with-attributes`,
+    {
+      method: 'GET',
+      ...(options || {}),
+    },
+  );
+}
+
+/** 创建产品（包含属性） POST /api/product/with-attributes */
+export async function createProductWithAttributes(
+  body: API.CreateProductWithAttributesRequest,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponse<API.ProductWithAttributesResponse>>(
+    '/api/product/with-attributes',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data: body,
+      ...(options || {}),
+    },
+  );
+}
+
+/** 更新产品（包含属性） PUT /api/product/:id/with-attributes */
+export async function updateProductWithAttributes(
+  id: number,
+  body: API.UpdateProductWithAttributesRequest,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponse<API.ProductWithAttributesResponse>>(
+    `/api/product/${id}/with-attributes`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data: body,
+      ...(options || {}),
+    },
+  );
+}
+
+/** 获取分类属性模板 GET /api/product/categories/:category_id/template */
+export async function getCategoryAttributeTemplate(
+  categoryId: number,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponse<API.CategoryAttributeTemplateResponse>>(
+    `/api/product/categories/${categoryId}/template`,
+    {
+      method: 'GET',
+      ...(options || {}),
+    },
+  );
+}
+
+/** 验证产品属性 POST /api/product/attributes/validate */
+export async function validateProductAttributes(
+  body: API.ValidateProductAttributesRequest,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponse<API.ValidationResult>>('/api/product/attributes/validate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}

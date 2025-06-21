@@ -390,6 +390,91 @@ declare namespace API {
     sort?: number;
   };
 
+  // ========== 产品属性相关类型定义 ==========
+
+  // 产品属性值输入
+  type ProductAttributeValueInput = {
+    attribute_id: number;
+    value: any;
+  };
+
+  // 产品属性响应
+  type ProductAttributeResponse = {
+    attribute_id: number;
+    attribute_name: string;
+    attribute_type: string;
+    display_name: string;
+    is_required: boolean;
+    is_inherited: boolean;
+    inherited_from?: number;
+    value: any;
+  };
+
+  // 带属性的产品响应
+  type ProductWithAttributesResponse = {
+    id: number;
+    name: string;
+    category_id: number;
+    created_at: string;
+    updated_at: string;
+    attributes: ProductAttributeResponse[];
+  };
+
+  // 创建产品（包含属性）请求
+  type CreateProductWithAttributesRequest = {
+    name: string;
+    category_id: number;
+    attributes: ProductAttributeValueInput[];
+  };
+
+  // 更新产品（包含属性）请求
+  type UpdateProductWithAttributesRequest = {
+    name?: string;
+    category_id?: number;
+    attributes?: ProductAttributeValueInput[];
+  };
+
+  // 分类属性模板项
+  type CategoryAttributeTemplateItem = {
+    attribute_id: number;
+    name: string;
+    display_name: string;
+    type: string;
+    is_required: boolean;
+    is_inherited: boolean;
+    inherited_from?: number;
+    default_value?: string;
+    unit?: string;
+    sort: number;
+    options?: any;
+    validation?: any;
+  };
+
+  // 分类属性模板响应
+  type CategoryAttributeTemplateResponse = {
+    category_id: number;
+    attributes: CategoryAttributeTemplateItem[];
+  };
+
+  // 属性验证错误
+  type AttributeValidationError = {
+    attribute_id: number;
+    field: string;
+    message: string;
+  };
+
+  // 验证结果
+  type ValidationResult = {
+    is_valid: boolean;
+    errors: AttributeValidationError[];
+  };
+
+  // 验证产品属性请求
+  type ValidateProductAttributesRequest = {
+    category_id: number;
+    attributes: ProductAttributeValueInput[];
+  };
+
   // 通用响应类型（兼容BaseResponse）
   type Response<T = any> = BaseResponse<T>;
 }

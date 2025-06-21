@@ -141,6 +141,10 @@ const CategoryList: React.FC = () => {
 
   // 打开属性管理
   const handleManageAttributes = (record: API.CategoryInfo) => {
+    if (!record || !record.id) {
+      message.error('无效的分类信息');
+      return;
+    }
     setSelectedCategory(record);
     setAttributeManagerVisible(true);
   };

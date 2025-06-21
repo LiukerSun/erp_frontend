@@ -4,6 +4,7 @@ import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
 import { Button, message, Popconfirm, Tag } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
+import ProductDetail from './components/ProductDetail';
 import ProductForm from './components/ProductForm';
 
 const ProductList: React.FC = () => {
@@ -13,6 +14,8 @@ const ProductList: React.FC = () => {
   const [formTitle, setFormTitle] = useState('');
   const [categoryMap, setCategoryMap] = useState<Map<number, string>>(new Map());
   const [categoryTreeData, setCategoryTreeData] = useState<any[]>([]);
+  const [productDetailVisible, setProductDetailVisible] = useState(false);
+  const [currentProductId, setCurrentProductId] = useState<number | null>(null);
 
   // 获取分类数据并构建映射
   const fetchCategories = async () => {
@@ -70,6 +73,12 @@ const ProductList: React.FC = () => {
     setCurrentProduct(record);
     setFormTitle('编辑产品');
     setProductFormVisible(true);
+  };
+
+  // 查看产品详情
+  const handleViewDetail = (record: API.ProductInfo) => {
+    setCurrentProductId(record.id);
+    setProductDetailVisible(true);
   };
 
   // 删除产品
@@ -147,8 +156,11 @@ const ProductList: React.FC = () => {
     {
       title: '操作',
       valueType: 'option',
-      width: 180,
+      width: 240,
       render: (_, record) => [
+        <Button key="detail" type="link" size="small" onClick={() => handleViewDetail(record)}>
+          查看详情
+        </Button>,
         <Button key="edit" type="link" size="small" onClick={() => handleEdit(record)}>
           编辑
         </Button>,
@@ -232,6 +244,12 @@ const ProductList: React.FC = () => {
         onSuccess={handleFormSuccess}
         product={currentProduct}
         title={formTitle}
+      />
+
+      <ProductDetail
+        visible={productDetailVisible}
+        onClose={() => setProductDetailVisible(false)}
+        productId={currentProductId}
       />
     </PageContainer>
   );

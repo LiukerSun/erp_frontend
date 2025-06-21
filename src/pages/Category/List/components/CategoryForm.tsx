@@ -67,16 +67,16 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
       };
 
       let response;
-      if (category) {
-        // 编辑模式
+      if (category && category.id) {
+        // 编辑模式 - 只有当category存在且有有效id时才是编辑
         response = await updateCategory(category.id, categoryData);
       } else {
-        // 新增模式
+        // 新增模式 - 包括创建根分类和子分类
         response = await createCategory(categoryData as API.CreateCategoryRequest);
       }
 
       if (response.success) {
-        message.success(category ? '更新成功' : '创建成功');
+        message.success(category && category.id ? '更新成功' : '创建成功');
         onSuccess();
         return true;
       } else {
@@ -100,8 +100,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
         destroyOnClose: true,
       }}
       initialValues={
-        category
+        category && category.id
           ? {
+              // 编辑模式的初始值
               name: category.name,
               description: category.description,
               parent_id: category.parent_id,
@@ -109,8 +110,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
               is_active: category.is_active,
             }
           : {
+              // 新增模式的初始值
               is_active: true,
               sort: 0,
+              parent_id: category?.parent_id, // 如果是创建子分类，设置父分类ID
             }
       }
     >

@@ -87,7 +87,10 @@ const CategoryAttributeManager: React.FC<CategoryAttributeManagerProps> = ({
 
   // 获取继承路径信息
   const fetchInheritancePaths = async (attributes: API.CategoryAttributeWithInheritanceInfo[]) => {
-    if (!category) return;
+    if (!category || !category.id) {
+      console.error('无效的分类信息，无法获取继承路径：', category);
+      return;
+    }
 
     const inheritedAttributes = attributes.filter((attr) => attr.is_inherited);
     const pathPromises = inheritedAttributes.map(async (attr) => {
@@ -118,7 +121,10 @@ const CategoryAttributeManager: React.FC<CategoryAttributeManagerProps> = ({
 
   // 获取分类属性列表（包含继承）
   const fetchCategoryAttributes = async () => {
-    if (!category) return;
+    if (!category || !category.id) {
+      console.error('无效的分类信息：', category);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -133,6 +139,7 @@ const CategoryAttributeManager: React.FC<CategoryAttributeManagerProps> = ({
         message.error(response.message || '获取分类属性失败');
       }
     } catch (error) {
+      console.error('获取分类属性失败：', error);
       message.error('获取分类属性失败，请重试');
     } finally {
       setLoading(false);
@@ -163,13 +170,13 @@ const CategoryAttributeManager: React.FC<CategoryAttributeManagerProps> = ({
   // 显示继承路径详情
   const showInheritancePath = (attributeId: number) => {
     const pathInfo = inheritancePathInfo[attributeId];
-    if (!pathInfo) return;
-
-    const attr = categoryAttributes.find((a) => a.attribute_id === attributeId);
-    if (!attr) return;
+    if (!pathInfo || !pathInfo.path) {
+      message.warning('暂无继承路径信息');
+      return;
+    }
 
     Modal.info({
-      title: `属性继承路径 - ${attr.attribute.display_name}`,
+      title: '属性继承路径',
       width: 600,
       content: (
         <div>
@@ -235,7 +242,10 @@ const CategoryAttributeManager: React.FC<CategoryAttributeManagerProps> = ({
     is_required: boolean;
     sort: number;
   }) => {
-    if (!category) return;
+    if (!category || !category.id) {
+      message.error('无效的分类信息');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -263,7 +273,10 @@ const CategoryAttributeManager: React.FC<CategoryAttributeManagerProps> = ({
 
   // 解绑属性
   const handleUnbindAttribute = async (attributeId: number) => {
-    if (!category) return;
+    if (!category || !category.id) {
+      message.error('无效的分类信息');
+      return;
+    }
 
     Modal.confirm({
       title: '确认解绑',
@@ -298,7 +311,10 @@ const CategoryAttributeManager: React.FC<CategoryAttributeManagerProps> = ({
 
   // 保存编辑
   const handleSaveEdit = async (record: API.CategoryAttributeWithInheritanceInfo) => {
-    if (!category || !editingAttribute) return;
+    if (!category || !category.id || !editingAttribute) {
+      message.error('无效的分类信息或编辑状态');
+      return;
+    }
 
     try {
       const response = await updateCategoryAttribute(category.id, record.attribute_id, {
