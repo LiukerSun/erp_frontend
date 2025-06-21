@@ -96,385 +96,189 @@ declare namespace API {
     new_password: string;
   };
 
-  // ========== 产品相关类型定义 ==========
-
-  // 产品信息
-  type ProductInfo = {
+  // 商品标签信息
+  type ProductTag = {
     id: number;
     name: string;
-    category_id: number;
-    created_at: string;
-    updated_at: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt?: string;
+    products?: Product[];
   };
 
-  // 产品响应（包含在BaseResponse中）
-  type ProductResponse = ProductInfo;
+  // 商品颜色信息
+  type ProductColor = {
+    id: number;
+    name: string;
+    code?: string;
+    hex_color?: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt?: string;
+    products?: Product[];
+  };
 
-  // 获取产品列表参数
+  // 商品图片信息
+  type ProductImage = {
+    url: string;
+    title?: string;
+    alt?: string;
+    is_main?: boolean;
+    sort?: number;
+  };
+
+  // 商品信息
+  type Product = {
+    id: number;
+    name: string;
+    sku: string;
+    product_code?: string; // 商品编码（店铺编号-货号）
+    price: number;
+    cost_price: number;
+    discount_price?: number;
+    is_discounted: boolean;
+    source_id?: number;
+    source?: Source;
+    shipping_time?: string;
+    images?: ProductImage[]; // 商品图片列表
+    tags?: ProductTag[]; // 标签（如果API支持的话）
+    colors: ProductColor[];
+    createdAt: string;
+    updatedAt: string;
+    deletedAt?: string;
+  };
+
+  // 获取商品列表参数
   type GetProductListParams = {
     page?: number;
-    limit?: number;
-    name?: string;
-    category_id?: number;
+    page_size?: number;
+    name?: string; // 商品名称搜索（模糊匹配）
+    sku?: string; // SKU精确搜索
+    product_code?: string; // 商品编码搜索（模糊匹配）
+    source_id?: number; // 货源ID筛选
+    min_price?: number; // 最低价格
+    max_price?: number; // 最高价格
+    is_discounted?: boolean; // 是否优惠筛选
+    colors?: string[]; // 颜色筛选（可多选）
+    shipping_time?: string; // 发货时间筛选（模糊匹配）
+    order_by?: 'price' | 'created_at' | 'updated_at' | 'name'; // 排序字段
+    order_dir?: 'asc' | 'desc'; // 排序方向
   };
 
-  // 产品列表响应
+  // 商品列表响应
   type ProductListResponse = {
-    products: ProductInfo[];
-    pagination: Pagination;
+    items: Product[];
+    total: number;
   };
 
-  // 创建产品请求
+  // 创建商品请求
   type CreateProductRequest = {
     name: string;
-    category_id: number;
+    sku: string;
+    price: number;
+    cost_price: number;
+    discount_price?: number;
+    is_discounted?: boolean;
+    source_id?: number;
+    shipping_time?: string;
+    images?: ProductImage[]; // 商品图片列表
+    colors?: string[];
   };
 
-  // 更新产品请求
-  type UpdateProductRequest = {
-    name?: string;
-    category_id?: number;
+  // 更新商品请求
+  type UpdateProductRequest = CreateProductRequest;
+
+  // 货源信息
+  type Source = {
+    id: number;
+    name: string;
+    code: string;
+    status: number; // 1-启用，0-禁用
+    remark?: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt?: string;
   };
 
-  // 搜索产品参数
-  type SearchProductParams = {
-    name?: string;
-    category_id?: number;
+  // 获取货源列表参数
+  type GetSourceListParams = {
     page?: number;
-    limit?: number;
+    page_size?: number;
   };
 
-  // ========== 分类相关类型定义 ==========
+  // 货源列表响应
+  type SourceListResponse = {
+    items: Source[];
+    page: number;
+    size: number;
+    total: number;
+  };
 
-  // 分类信息
-  type CategoryInfo = {
+  // 创建货源请求
+  type CreateSourceRequest = {
+    name: string;
+    code: string;
+    status?: number;
+    remark?: string;
+  };
+
+  // 更新货源请求
+  type UpdateSourceRequest = CreateSourceRequest;
+
+  // 颜色信息
+  type Color = {
     id: number;
     name: string;
-    description?: string;
-    parent_id?: number;
-    level: number;
-    sort: number;
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
+    code?: string;
+    hex_color?: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt?: string;
+    products?: Product[];
   };
 
-  // 树状分类信息
-  type CategoryTreeInfo = CategoryInfo & {
-    children?: CategoryTreeInfo[];
-  };
-
-  // 分类响应（包含在BaseResponse中）
-  type CategoryResponse = CategoryInfo;
-
-  // 获取分类列表参数
-  type GetCategoryListParams = {
+  // 获取颜色列表参数
+  type GetColorListParams = {
     page?: number;
-    limit?: number;
-    name?: string;
-    parent_id?: number;
-    is_active?: boolean;
+    page_size?: number;
   };
 
-  // 分类列表响应
-  type CategoryListResponse = {
-    categories: CategoryInfo[];
-    pagination: Pagination;
-  };
+  // 颜色列表响应
+  type ColorListResponse = Color[];
 
-  // 分类树列表响应
-  type CategoryTreeListResponse = {
-    categories: CategoryTreeInfo[];
-  };
-
-  // 创建分类请求
-  type CreateCategoryRequest = {
+  // 创建颜色请求
+  type CreateColorRequest = {
     name: string;
-    description?: string;
-    parent_id?: number;
-    sort?: number;
-    is_active?: boolean;
+    code?: string;
+    hex_color?: string;
   };
 
-  // 更新分类请求
-  type UpdateCategoryRequest = {
-    name?: string;
-    description?: string;
-    parent_id?: number;
-    sort?: number;
-    is_active?: boolean;
+  // 更新颜色请求
+  type UpdateColorRequest = CreateColorRequest;
+
+  // 阿里云STS Token
+  type StsToken = {
+    accessKeyId: string;
+    accessKeySecret: string;
+    securityToken: string;
+    expiration: string;
+    region: string;
+    bucket: string;
+    endpoint: string;
   };
 
-  // 移动分类请求
-  type MoveCategoryRequest = {
-    parent_id?: number;
-  };
-
-  // ========== 属性相关类型定义 ==========
-
-  // 属性类型枚举
-  type AttributeType =
-    | 'text'
-    | 'number'
-    | 'select'
-    | 'multi_select'
-    | 'boolean'
-    | 'date'
-    | 'datetime'
-    | 'url'
-    | 'email'
-    | 'color'
-    | 'currency';
-
-  // 属性选项
-  type AttributeOption = {
-    value: string;
-    label: string;
-    color?: string;
-    description?: string;
-    extra?: Record<string, any>;
-  };
-
-  // 验证规则
-  type ValidationRule = {
-    required?: boolean;
-    min?: number;
-    max?: number;
-    min_length?: number;
-    max_length?: number;
-    pattern?: string;
-    custom?: Record<string, any>;
-  };
-
-  // 属性信息
-  type AttributeInfo = {
+  // 查询历史记录
+  type QueryHistoryItem = {
     id: number;
-    name: string;
-    display_name: string;
-    description?: string;
-    type: AttributeType;
-    is_required: boolean;
-    is_multiple: boolean;
-    is_active: boolean;
-    default_value?: string;
-    unit?: string;
-    sort: number;
-    options?: AttributeOption[];
-    validation?: ValidationRule;
+    product_id: number;
+    product_code: string;
+    query_time: string;
     created_at: string;
-    updated_at: string;
   };
 
-  // 属性响应（包含在BaseResponse中）
-  type AttributeResponse = AttributeInfo;
+  // 查询历史列表响应
+  type QueryHistoryResponse = QueryHistoryItem[];
 
-  // 获取属性列表参数
-  type GetAttributeListParams = {
-    page?: number;
-    limit?: number;
-    name?: string;
-    type?: string;
-    is_active?: boolean;
-  };
-
-  // 属性列表响应
-  type AttributeListResponse = {
-    attributes: AttributeInfo[];
-    pagination: Pagination;
-  };
-
-  // 创建属性请求
-  type CreateAttributeRequest = {
-    name: string;
-    display_name: string;
-    description?: string;
-    type: AttributeType;
-    is_required?: boolean;
-    is_active?: boolean;
-    default_value?: string;
-    unit?: string;
-    sort?: number;
-    options?: AttributeOption[];
-    validation?: ValidationRule;
-  };
-
-  // 更新属性请求
-  type UpdateAttributeRequest = {
-    name?: string;
-    display_name?: string;
-    description?: string;
-    type?: AttributeType;
-    is_required?: boolean;
-    is_active?: boolean;
-    default_value?: string;
-    unit?: string;
-    sort?: number;
-    options?: AttributeOption[];
-    validation?: ValidationRule;
-  };
-
-  // ========== 分类属性绑定相关类型定义 ==========
-
-  // 分类属性关联信息
-  type CategoryAttributeInfo = {
-    id: number;
-    category_id: number;
-    attribute_id: number;
-    attribute: AttributeInfo;
-    is_required: boolean;
-    sort: number;
-    created_at: string;
-    updated_at: string;
-  };
-
-  // 带继承信息的分类属性关联信息
-  type CategoryAttributeWithInheritanceInfo = {
-    id: number;
-    category_id: number;
-    attribute_id: number;
-    attribute: AttributeInfo;
-    is_required: boolean;
-    sort: number;
-    is_inherited: boolean;
-    inherited_from?: number; // 继承来源分类ID
-    created_at: string;
-    updated_at: string;
-  };
-
-  // 分类属性列表响应
-  type CategoryAttributesResponse = {
-    category_id: number;
-    attributes: CategoryAttributeInfo[];
-  };
-
-  // 带继承信息的分类属性列表响应
-  type CategoryAttributesWithInheritanceResponse = {
-    category_id: number;
-    attributes: CategoryAttributeWithInheritanceInfo[];
-  };
-
-  // 属性继承路径响应
-  type AttributeInheritancePathResponse = {
-    attribute_id: number;
-    category_id: number;
-    path: CategoryAttributeWithInheritanceInfo[];
-  };
-
-  // 绑定属性到分类请求
-  type BindAttributeToCategoryRequest = {
-    category_id: number;
-    attribute_id: number;
-    is_required?: boolean;
-    sort?: number;
-  };
-
-  // 批量绑定属性到分类请求
-  type BatchBindAttributesToCategoryRequest = {
-    category_id: number;
-    attributes: Array<{
-      attribute_id: number;
-      is_required?: boolean;
-      sort?: number;
-    }>;
-  };
-
-  // 解绑分类属性请求
-  type UnbindAttributeFromCategoryRequest = {
-    category_id: number;
-    attribute_id: number;
-  };
-
-  // 更新分类属性关联请求
-  type UpdateCategoryAttributeRequest = {
-    is_required?: boolean;
-    sort?: number;
-  };
-
-  // ========== 产品属性相关类型定义 ==========
-
-  // 产品属性值输入
-  type ProductAttributeValueInput = {
-    attribute_id: number;
-    value: any;
-  };
-
-  // 产品属性响应
-  type ProductAttributeResponse = {
-    attribute_id: number;
-    attribute_name: string;
-    attribute_type: string;
-    display_name: string;
-    is_required: boolean;
-    is_inherited: boolean;
-    inherited_from?: number;
-    value: any;
-  };
-
-  // 带属性的产品响应
-  type ProductWithAttributesResponse = {
-    id: number;
-    name: string;
-    category_id: number;
-    created_at: string;
-    updated_at: string;
-    attributes: ProductAttributeResponse[];
-  };
-
-  // 创建产品（包含属性）请求
-  type CreateProductWithAttributesRequest = {
-    name: string;
-    category_id: number;
-    attributes: ProductAttributeValueInput[];
-  };
-
-  // 更新产品（包含属性）请求
-  type UpdateProductWithAttributesRequest = {
-    name?: string;
-    category_id?: number;
-    attributes?: ProductAttributeValueInput[];
-  };
-
-  // 分类属性模板项
-  type CategoryAttributeTemplateItem = {
-    attribute_id: number;
-    name: string;
-    display_name: string;
-    type: string;
-    is_required: boolean;
-    is_inherited: boolean;
-    inherited_from?: number;
-    default_value?: string;
-    unit?: string;
-    sort: number;
-    options?: any;
-    validation?: any;
-  };
-
-  // 分类属性模板响应
-  type CategoryAttributeTemplateResponse = {
-    category_id: number;
-    attributes: CategoryAttributeTemplateItem[];
-  };
-
-  // 属性验证错误
-  type AttributeValidationError = {
-    attribute_id: number;
-    field: string;
-    message: string;
-  };
-
-  // 验证结果
-  type ValidationResult = {
-    is_valid: boolean;
-    errors: AttributeValidationError[];
-  };
-
-  // 验证产品属性请求
-  type ValidateProductAttributesRequest = {
-    category_id: number;
-    attributes: ProductAttributeValueInput[];
-  };
-
-  // 通用响应类型（兼容BaseResponse）
-  type Response<T = any> = BaseResponse<T>;
+  // 清空查询历史响应
+  type ClearQueryHistoryResponse = string;
 }

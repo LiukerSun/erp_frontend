@@ -139,12 +139,7 @@ const UserList: React.FC = () => {
         const isCurrentUser = loginUser?.id === record.id;
 
         return [
-          <Button
-            key="edit"
-            type="link"
-            size="small"
-            onClick={() => handleEdit(record)}
-          >
+          <Button key="edit" type="link" size="small" onClick={() => handleEdit(record)}>
             编辑
           </Button>,
           <Button
@@ -157,8 +152,8 @@ const UserList: React.FC = () => {
           </Button>,
           <Popconfirm
             key="delete"
-            title={isCurrentUser ? "不能删除自己的账户" : "确定要删除这个用户吗？"}
-            description={isCurrentUser ? "您不能删除自己的账户" : "此操作不可恢复，请谨慎操作。"}
+            title={isCurrentUser ? '不能删除自己的账户' : '确定要删除这个用户吗？'}
+            description={isCurrentUser ? '您不能删除自己的账户' : '此操作不可恢复，请谨慎操作。'}
             onConfirm={isCurrentUser ? undefined : () => handleDelete(record)}
             okText="确定"
             cancelText="取消"
@@ -169,7 +164,7 @@ const UserList: React.FC = () => {
               size="small"
               danger
               disabled={isCurrentUser}
-              title={isCurrentUser ? "不能删除自己的账户" : ""}
+              title={isCurrentUser ? '不能删除自己的账户' : ''}
             >
               删除
             </Button>
@@ -229,8 +224,7 @@ const UserList: React.FC = () => {
           defaultPageSize: 10,
           showSizeChanger: true,
           showQuickJumper: true,
-          showTotal: (total, range) =>
-            `第 ${range[0]}-${range[1]} 条/总共 ${total} 条`,
+          showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/总共 ${total} 条`,
         }}
       />
 
@@ -250,9 +244,6 @@ const UserList: React.FC = () => {
         open={resetPasswordVisible}
         onOpenChange={setResetPasswordVisible}
         onFinish={handleResetPasswordSubmit}
-        modalProps={{
-          destroyOnClose: true,
-        }}
       >
         <ProFormText.Password
           name="new_password"

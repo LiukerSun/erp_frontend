@@ -1,5 +1,5 @@
 import { clearAuth } from '@/utils/auth';
-import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
+import { LogoutOutlined } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
 import { Spin, message } from 'antd';
 import { createStyles } from 'antd-style';
@@ -119,11 +119,6 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ children }) =
   }
 
   const menuItems = [
-    {
-      key: 'profile',
-      icon: <SettingOutlined />,
-      label: '个人中心',
-    },
     {
       type: 'divider' as const,
     },

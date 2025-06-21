@@ -57,46 +57,52 @@ export default [
     routes: [
       {
         path: '/product-management',
-        redirect: '/product-management/list',
+        redirect: '/product-management/products',
       },
       {
         name: 'product-list',
-        path: '/product-management/list',
+        path: '/product-management/products',
         component: './Product/List',
       },
+      {
+        name: 'color-list',
+        path: '/product-management/colors',
+        component: './Color/List',
+      },
+      {
+        name: 'barcode-generator',
+        path: '/product-management/barcode',
+        component: './Barcode/Generator',
+        hideInMenu: true,
+      },
+      {
+        name: 'barcode-scanner',
+        path: '/product-management/scanner',
+        component: './Barcode/Scanner',
+      },
     ],
   },
   {
-    path: '/category-management',
-    name: 'category-management',
-    icon: 'cluster',
+    path: '/source-management',
+    name: 'source-management',
+    icon: 'database',
     routes: [
       {
-        path: '/category-management',
-        redirect: '/category-management/list',
+        path: '/source-management',
+        redirect: '/source-management/list',
       },
       {
-        name: 'category-list',
-        path: '/category-management/list',
-        component: './Category/List',
+        name: 'source-list',
+        path: '/source-management/list',
+        component: './Source/List',
       },
     ],
   },
   {
-    path: '/attribute-management',
-    name: 'attribute-management',
-    icon: 'setting',
-    routes: [
-      {
-        path: '/attribute-management',
-        redirect: '/attribute-management/list',
-      },
-      {
-        name: 'attribute-list',
-        path: '/attribute-management/list',
-        component: './Attribute/List',
-      },
-    ],
+    path: '/websocket',
+    name: 'websocket',
+    icon: 'ApiOutlined',
+    component: './WebSocket',
   },
   // 个人资料页面，不在左侧菜单显示
   {

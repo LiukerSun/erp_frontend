@@ -71,9 +71,6 @@ const UserProfile: React.FC = () => {
             title: '首页',
             href: '/welcome',
           },
-          {
-            title: '个人中心',
-          },
         ],
       }}
     >

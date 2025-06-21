@@ -74,7 +74,10 @@ export async function getUserList(params: API.GetUserListParams, options?: { [ke
 }
 
 /** 管理员创建用户 POST /api/user/admin/users */
-export async function createUser(body: API.AdminCreateUserRequest, options?: { [key: string]: any }) {
+export async function createUser(
+  body: API.AdminCreateUserRequest,
+  options?: { [key: string]: any },
+) {
   return request<API.BaseResponse<API.UserResponse>>('/api/user/admin/users', {
     method: 'POST',
     headers: {

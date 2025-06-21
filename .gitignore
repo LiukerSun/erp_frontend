@@ -41,3 +41,5 @@ screenshot
 build
 .editorconfig
 swagger.json
+api.json
+*.zip

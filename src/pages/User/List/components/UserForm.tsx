@@ -57,9 +57,6 @@ const UserForm: React.FC<UserFormProps> = ({
       open={visible}
       onOpenChange={onVisibleChange}
       onFinish={handleSubmit}
-      modalProps={{
-        destroyOnClose: true,
-      }}
       initialValues={user || { role: 'user', is_active: true }}
     >
       <ProFormText
@@ -73,7 +70,7 @@ const UserForm: React.FC<UserFormProps> = ({
         ]}
         disabled={!!user?.id} // 编辑时用户名不可修改
       />
-      
+
       {!user?.id && (
         <ProFormText.Password
           name="password"
@@ -125,4 +122,4 @@ const UserForm: React.FC<UserFormProps> = ({
   );
 };
 
-export default UserForm; 
+export default UserForm;

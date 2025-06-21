@@ -1,30 +1,23 @@
-import { getCategoryTree } from '@/services/erp/category';
-import {
-  createProductWithAttributes,
-  getCategoryAttributeTemplate,
-  getProductWithAttributes,
-  updateProductWithAttributes,
-} from '@/services/erp/product';
+import { createProduct, getAllColors, getProduct, updateProduct } from '@/services/erp/product';
+import { getActiveSourceList } from '@/services/erp/source';
+import { ossUploader } from '@/utils/oss-upload';
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   ModalForm,
-  ProFormDatePicker,
-  ProFormDateTimePicker,
   ProFormDigit,
-  ProFormGroup,
   ProFormSelect,
   ProFormSwitch,
   ProFormText,
-  ProFormTextArea,
-  ProFormTreeSelect,
 } from '@ant-design/pro-components';
-import { Alert, message, Spin } from 'antd';
-import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Col, message, Popconfirm, Row, Upload } from 'antd';
+import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
+import React, { useEffect, useState } from 'react';
 
 interface ProductFormProps {
   visible: boolean;
   onVisibleChange: (visible: boolean) => void;
   onSuccess: () => void;
-  product?: API.ProductInfo;
+  product?: API.Product;
   title: string;
 }
 
@@ -35,355 +28,189 @@ const ProductForm: React.FC<ProductFormProps> = ({
   product,
   title,
 }) => {
-  const [categoryTreeData, setCategoryTreeData] = useState<any[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>();
-  const [attributeTemplate, setAttributeTemplate] = useState<API.CategoryAttributeTemplateItem[]>(
-    [],
-  );
-  const [loadingTemplate, setLoadingTemplate] = useState(false);
-  const [productWithAttributes, setProductWithAttributes] =
-    useState<API.ProductWithAttributesResponse | null>(null);
+  const [colors, setColors] = useState<API.Color[]>([]);
+  const [sources, setSources] = useState<API.Source[]>([]);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
 
-  // 将分类数据转换为TreeSelect需要的格式
-  const convertToTreeSelectData = (categories: API.CategoryTreeInfo[]): any[] => {
-    return categories.map((cat) => ({
-      title: cat.name,
-      value: cat.id,
-      key: cat.id,
-      disabled: !cat.is_active, // 禁用未启用的分类
-      children: cat.children ? convertToTreeSelectData(cat.children) : undefined,
+  // 获取所有颜色
+  const fetchColors = async () => {
+    try {
+      const response = await getAllColors();
+      if (response.success) {
+        setColors(response.data || []);
+      }
+    } catch (error) {
+      console.error('获取颜色失败:', error);
+    }
+  };
+
+  // 获取激活的货源
+  const fetchActiveSources = async () => {
+    try {
+      const response = await getActiveSourceList();
+      if (response.success) {
+        setSources(response.data || []);
+      }
+    } catch (error) {
+      console.error('获取货源失败:', error);
+    }
+  };
+
+  // 初始化图片列表
+  const initializeImages = (images?: API.ProductImage[]) => {
+    if (!images || images.length === 0) {
+      setFileList([]);
+      return;
+    }
+
+    const uploadFiles: UploadFile[] = images.map((image, index) => ({
+      uid: `existing-${index}`,
+      name: image.title || `image-${index}`,
+      status: 'done',
+      url: image.url,
+      thumbUrl: image.url,
+      isMain: image.is_main,
     }));
-  };
 
-  // 获取分类树数据
-  const fetchCategoryTree = async () => {
-    try {
-      const response = await getCategoryTree();
-      if (response.success) {
-        const treeData = convertToTreeSelectData(response.data.categories || []);
-        setCategoryTreeData(treeData);
-      }
-    } catch (error) {
-      console.error('获取分类树失败:', error);
-    }
-  };
-
-  // 获取分类属性模板
-  const fetchAttributeTemplate = async (categoryId: number) => {
-    if (!categoryId || categoryId === undefined) {
-      console.error('无效的分类ID：', categoryId);
-      return;
-    }
-
-    setLoadingTemplate(true);
-    try {
-      const response = await getCategoryAttributeTemplate(categoryId);
-      if (response.success) {
-        // 使用Map进行去重，以attribute_id为key
-        const uniqueAttributes = new Map();
-        response.data.attributes.forEach((attr) => {
-          // 如果属性已存在，只有当新属性不是继承的时候才更新
-          if (!uniqueAttributes.has(attr.attribute_id) || !attr.is_inherited) {
-            uniqueAttributes.set(attr.attribute_id, attr);
-          }
-        });
-        setAttributeTemplate(Array.from(uniqueAttributes.values()));
-      } else {
-        message.error('获取分类属性模板失败');
-        setAttributeTemplate([]);
-      }
-    } catch (error) {
-      console.error('获取分类属性模板失败:', error);
-      message.error('获取分类属性模板失败');
-      setAttributeTemplate([]);
-    } finally {
-      setLoadingTemplate(false);
-    }
-  };
-
-  // 获取产品详情（包含属性）
-  const fetchProductWithAttributes = async (productId: number) => {
-    if (!productId || productId === undefined) {
-      console.error('无效的产品ID：', productId);
-      return;
-    }
-
-    try {
-      const response = await getProductWithAttributes(productId);
-      if (response.success) {
-        setProductWithAttributes(response.data);
-      }
-    } catch (error) {
-      console.error('获取产品详情失败:', error);
-    }
+    setFileList(uploadFiles);
   };
 
   useEffect(() => {
     if (visible) {
-      fetchCategoryTree();
-      if (product?.id) {
-        fetchProductWithAttributes(product.id);
-        // 设置编辑时的分类ID
-        setSelectedCategoryId(product.category_id);
-      } else {
-        // 如果是新建模式，清空产品属性数据
-        setProductWithAttributes(null);
-        setSelectedCategoryId(undefined);
-      }
-    } else {
-      // 关闭时重置状态
-      setProductWithAttributes(null);
-      setAttributeTemplate([]);
-      setSelectedCategoryId(undefined);
-    }
-  }, [visible, product?.id, product?.category_id]);
+      fetchColors();
+      fetchActiveSources();
 
+      // 阻止Upload组件的默认下载行为
+      const preventDownload = (e: Event) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('.ant-upload-list-picture-card-container')) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      };
+
+      document.addEventListener('click', preventDownload, true);
+      document.addEventListener('mousedown', preventDownload, true);
+
+      return () => {
+        document.removeEventListener('click', preventDownload, true);
+        document.removeEventListener('mousedown', preventDownload, true);
+      };
+    }
+  }, [visible]);
+
+  // 监听 product 变化，当切换到新增模式时重置 fileList
   useEffect(() => {
-    if (selectedCategoryId) {
-      fetchAttributeTemplate(selectedCategoryId);
-    } else {
-      setAttributeTemplate([]);
+    if (!product) {
+      // 当 product 为 undefined 时（新增模式），重置 fileList
+      setFileList([]);
     }
-  }, [selectedCategoryId]);
+  }, [product]);
 
-  // 处理分类变化
-  const handleCategoryChange = (categoryId: number) => {
-    setSelectedCategoryId(categoryId);
+  // 监听 visible 变化，当表单关闭时重置 fileList
+  useEffect(() => {
+    if (!visible) {
+      // 当表单关闭时，重置 fileList 状态
+      setFileList([]);
+    }
+  }, [visible]);
+
+  // 处理图片上传
+  const handleUploadChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
+    // 确保文件URL正确设置，并检查重复文件
+    const updatedFileList: UploadFile[] = [];
+    const seenNames = new Set<string>();
+
+    for (const file of newFileList) {
+      // 检查重复文件名
+      if (seenNames.has(file.name)) {
+        continue;
+      }
+      seenNames.add(file.name);
+
+      // 确保文件URL正确设置
+      if (file.status === 'done' && file.response?.url) {
+        updatedFileList.push({
+          ...file,
+          url: file.response.url,
+          thumbUrl: file.response.url,
+        });
+      } else {
+        updatedFileList.push(file);
+      }
+    }
+
+    setFileList(updatedFileList);
   };
 
-  // 根据属性类型渲染表单字段
-  const renderAttributeField = (attr: API.CategoryAttributeTemplateItem) => {
-    const fieldName = `attr_${attr.attribute_id}`;
-    const commonProps = {
-      name: fieldName,
-      label: (
-        <span>
-          {attr.display_name}
-          {attr.is_required && <span style={{ color: '#ff4d4f', marginLeft: '4px' }}>*</span>}
-          {attr.unit && <span style={{ color: '#999', fontSize: '12px' }}> ({attr.unit})</span>}
-        </span>
-      ),
-      placeholder: `请输入${attr.display_name}`,
-      rules: attr.is_required ? [{ required: true, message: `请输入${attr.display_name}` }] : [],
-    };
+  // 自定义上传处理
+  const customUpload = async (options: any) => {
+    const { file, onSuccess, onError, onProgress } = options;
 
-    switch (attr.type) {
-      case 'text':
-        return <ProFormText key={attr.attribute_id} {...commonProps} />;
+    try {
+      // 显示上传进度
+      onProgress({ percent: 50 });
 
-      case 'number':
-        return (
-          <ProFormDigit
-            key={attr.attribute_id}
-            {...commonProps}
-            fieldProps={{
-              precision: 2,
-              style: { width: '100%' },
-            }}
-          />
-        );
+      // 使用OSS上传工具上传文件
+      const imageUrl = await ossUploader.uploadFile(file);
 
-      case 'select':
-        return (
-          <ProFormSelect
-            key={attr.attribute_id}
-            {...commonProps}
-            options={
-              attr.options?.map((opt: any) => ({
-                label: opt.label,
-                value: opt.value,
-              })) || []
-            }
-          />
-        );
-
-      case 'multi_select':
-        return (
-          <ProFormSelect
-            key={attr.attribute_id}
-            {...commonProps}
-            mode="multiple"
-            options={
-              attr.options?.map((opt: any) => ({
-                label: opt.label,
-                value: opt.value,
-              })) || []
-            }
-          />
-        );
-
-      case 'boolean':
-        return (
-          <ProFormSwitch
-            key={attr.attribute_id}
-            {...commonProps}
-            fieldProps={{
-              checkedChildren: '是',
-              unCheckedChildren: '否',
-            }}
-          />
-        );
-
-      case 'date':
-        return (
-          <ProFormDatePicker
-            key={attr.attribute_id}
-            {...commonProps}
-            fieldProps={{
-              style: { width: '100%' },
-              format: 'YYYY-MM-DD',
-            }}
-          />
-        );
-
-      case 'datetime':
-        return (
-          <ProFormDateTimePicker
-            key={attr.attribute_id}
-            {...commonProps}
-            fieldProps={{
-              style: { width: '100%' },
-              format: 'YYYY-MM-DD HH:mm:ss',
-            }}
-          />
-        );
-
-      case 'url':
-        return (
-          <ProFormText
-            key={attr.attribute_id}
-            {...commonProps}
-            rules={[...commonProps.rules, { type: 'url', message: '请输入有效的URL地址' }]}
-          />
-        );
-
-      case 'email':
-        return (
-          <ProFormText
-            key={attr.attribute_id}
-            {...commonProps}
-            rules={[...commonProps.rules, { type: 'email', message: '请输入有效的邮箱地址' }]}
-          />
-        );
-
-      case 'color':
-        return (
-          <ProFormText
-            key={attr.attribute_id}
-            {...commonProps}
-            rules={[
-              ...commonProps.rules,
-              {
-                pattern: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
-                message: '请输入有效的颜色值（如：#FF0000）',
-              },
-            ]}
-          />
-        );
-
-      case 'currency':
-        return (
-          <ProFormDigit
-            key={attr.attribute_id}
-            {...commonProps}
-            fieldProps={{
-              precision: 2,
-              style: { width: '100%' },
-              addonBefore: '¥',
-            }}
-          />
-        );
-
-      default:
-        return <ProFormTextArea key={attr.attribute_id} {...commonProps} />;
+      // 上传成功 - 修复参数格式
+      onProgress({ percent: 100 });
+      const response = { url: imageUrl };
+      onSuccess(response, file);
+    } catch (error) {
+      message.error('图片上传失败，请重试');
+      onError(error);
     }
   };
-
-  // 获取初始值
-  const getInitialValues = useMemo(() => {
-    const initialValues: any = {
-      name: product?.name || '',
-      category_id: product?.category_id,
-    };
-
-    // 如果是编辑模式且有产品属性数据，设置属性初始值
-    if (productWithAttributes && productWithAttributes.attributes) {
-      productWithAttributes.attributes.forEach((attr) => {
-        const fieldName = `attr_${attr.attribute_id}`;
-        let value = attr.value;
-
-        // 处理日期时间类型的值转换
-        if (value && (attr.attribute_type === 'date' || attr.attribute_type === 'datetime')) {
-          value = new Date(value);
-        }
-
-        initialValues[fieldName] = value;
-      });
-    } else if (attributeTemplate.length > 0) {
-      // 如果没有产品属性数据但有属性模板，设置默认值
-      attributeTemplate.forEach((attr) => {
-        const fieldName = `attr_${attr.attribute_id}`;
-        if (
-          attr.default_value !== undefined &&
-          attr.default_value !== null &&
-          attr.default_value !== ''
-        ) {
-          let defaultValue: any = attr.default_value;
-
-          // 处理日期时间类型的默认值转换
-          if (attr.type === 'date' || attr.type === 'datetime') {
-            defaultValue = new Date(attr.default_value);
-          }
-
-          initialValues[fieldName] = defaultValue;
-        }
-      });
-    }
-
-    return initialValues;
-  }, [product, productWithAttributes, attributeTemplate]);
 
   const handleSubmit = async (values: any) => {
     try {
-      // 提取属性值 - 包括所有属性，即使值为空
-      const attributes: API.ProductAttributeValueInput[] = [];
-      attributeTemplate.forEach((attr) => {
-        const fieldName = `attr_${attr.attribute_id}`;
-        const fieldValue = values[fieldName];
-
-        // 处理不同类型的值
-        let processedValue = fieldValue;
-        if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
-          // 对于布尔类型，空值设为false
-          if (attr.type === 'boolean') {
-            processedValue = false;
-          } else {
-            processedValue = null;
-          }
+      // 处理图片数据
+      const images: API.ProductImage[] = fileList.map((file, index) => ({
+        url: file.url || '',
+        title: file.name,
+        alt: file.name,
+        is_main: index === 0,
+        sort: index + 1,
+      }));
+      // 自动生成产品编码：货源编码-SKU
+      let productCode = '';
+      if (values.source_id && values.sku) {
+        const selectedSource = sources.find((source) => source.id === values.source_id);
+        if (selectedSource && selectedSource.code) {
+          productCode = `${selectedSource.code}-${values.sku}`;
         } else {
-          // 处理日期时间类型的值格式化
-          if (attr.type === 'date' && fieldValue instanceof Date) {
-            processedValue = fieldValue.toISOString().split('T')[0]; // YYYY-MM-DD
-          } else if (attr.type === 'datetime' && fieldValue instanceof Date) {
-            processedValue = fieldValue.toISOString(); // ISO datetime string
-          }
+          // 如果找不到货源或货源没有编码，只使用SKU
+          productCode = values.sku;
         }
+      } else if (values.sku) {
+        // 如果没有选择货源，只使用SKU
+        productCode = values.sku;
+      }
 
-        attributes.push({
-          attribute_id: attr.attribute_id,
-          value: processedValue,
-        });
-      });
-
-      const productData = {
-        name: values.name,
-        category_id: values.category_id,
-        attributes,
+      // 处理价格字段，确保转换为数字类型
+      const formData = {
+        ...values,
+        product_code: productCode, // 自动生成的产品编码
+        price: values.price ? parseFloat(values.price) : undefined,
+        cost_price: values.cost_price ? parseFloat(values.cost_price) : undefined,
+        discount_price: values.discount_price ? parseFloat(values.discount_price) : undefined,
+        colors: Array.isArray(values.colors)
+          ? values.colors
+              .map((colorValue: any) => {
+                // 直接使用颜色值，因为现在统一使用颜色名称
+                return colorValue;
+              })
+              .filter((name: string) => name && name.trim() !== '')
+          : [], // 提交颜色名称数组
+        images: images,
       };
 
       if (product?.id) {
         // 编辑产品
-        const response = await updateProductWithAttributes(product.id, productData);
+        const response = await updateProduct(product.id, formData);
         if (response.success) {
           message.success('产品更新成功');
           onSuccess();
@@ -394,7 +221,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         }
       } else {
         // 新增产品
-        const response = await createProductWithAttributes(productData);
+        const response = await createProduct(formData);
         if (response.success) {
           message.success('产品创建成功');
           onSuccess();
@@ -405,10 +232,49 @@ const ProductForm: React.FC<ProductFormProps> = ({
         }
       }
     } catch (error) {
+      console.error('表单提交失败:', error);
       message.error('操作失败，请重试');
       return false;
     }
   };
+
+  // 构建颜色选项（带颜色块显示）
+  const colorOptions = colors.map((color) => ({
+    label: (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div
+          style={{
+            width: '16px',
+            height: '16px',
+            borderRadius: '4px',
+            backgroundColor: color.hex_color || '#cccccc',
+            border: '1px solid #d9d9d9',
+            flexShrink: 0,
+          }}
+        />
+        <span>{color.name}</span>
+      </div>
+    ),
+    value: color.name,
+  }));
+
+  // 构建货源选项
+  const sourceOptions = sources.map((source) => ({
+    label: `${source.name} (${source.code})`,
+    value: source.id,
+  }));
+
+  const getDefaultValues = () => ({
+    name: '',
+    sku: '',
+    price: undefined,
+    cost_price: undefined,
+    discount_price: undefined,
+    is_discounted: false,
+    source_id: undefined,
+    shipping_time: '',
+    colors: [],
+  });
 
   return (
     <ModalForm
@@ -416,63 +282,284 @@ const ProductForm: React.FC<ProductFormProps> = ({
       open={visible}
       onOpenChange={onVisibleChange}
       onFinish={handleSubmit}
+      key={product?.id || 'new'}
       modalProps={{
         destroyOnClose: true,
-        width: 800,
+        maskClosable: false,
       }}
-      initialValues={getInitialValues}
-      key={`${product?.id || 'new'}-${productWithAttributes?.id || 'empty'}`}
+      request={async () => {
+        // 如果是编辑模式且有产品ID，则获取最新详情
+        if (product?.id) {
+          try {
+            const response = await getProduct(product.id);
+            if (response.success) {
+              // 初始化图片列表
+              initializeImages(response.data.images);
+
+              return {
+                ...response.data,
+                colors:
+                  response.data.colors?.map((color: any) => {
+                    // 统一返回颜色名称，而不是ID
+                    if (typeof color === 'object' && color.name) {
+                      return color.name;
+                    } else if (typeof color === 'string') {
+                      return color;
+                    }
+                    return color;
+                  }) || [],
+              };
+            } else {
+              message.error(response.message || '获取产品详情失败');
+              return getDefaultValues();
+            }
+          } catch (error) {
+            message.error('获取产品详情失败，请重试');
+            return getDefaultValues();
+          }
+        }
+        // 新增模式返回默认值
+        initializeImages([]);
+        return getDefaultValues();
+      }}
+      width={800}
     >
-      <ProFormText
-        name="name"
-        label="产品名称"
-        placeholder="请输入产品名称"
-        rules={[
-          { required: true, message: '请输入产品名称' },
-          { min: 1, message: '产品名称至少1个字符' },
-          { max: 100, message: '产品名称最多100个字符' },
-        ]}
-      />
+      <Row gutter={24}>
+        {/* 左列 */}
+        <Col span={12}>
+          <ProFormText
+            name="name"
+            label="商品名称"
+            placeholder="请输入商品名称"
+            rules={[
+              { required: true, message: '请输入商品名称' },
+              { max: 200, message: '商品名称最多200个字符' },
+            ]}
+          />
 
-      <ProFormTreeSelect
-        name="category_id"
-        label="产品分类"
-        placeholder="请选择产品分类"
-        rules={[{ required: true, message: '请选择产品分类' }]}
-        fieldProps={{
-          treeData: categoryTreeData,
-          allowClear: false,
-          showSearch: true,
-          treeDefaultExpandAll: true,
-          filterTreeNode: (input: string, treeNode: any) =>
-            treeNode.title?.toLowerCase().indexOf(input.toLowerCase()) >= 0,
-          onChange: handleCategoryChange,
-        }}
-        tooltip="选择产品所属的分类，系统会自动加载该分类的属性模板"
-      />
+          <ProFormText
+            name="sku"
+            label="货号"
+            placeholder="请输入货号"
+            rules={[
+              { required: true, message: '请输入货号' },
+              { max: 100, message: '货号最多100个字符' },
+            ]}
+            tooltip="产品编码将自动生成为：货源编码-货号"
+          />
 
-      {selectedCategoryId && (
-        <ProFormGroup title="产品属性">
-          {loadingTemplate ? (
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <Spin tip="正在加载属性模板..." />
+          <ProFormDigit
+            name="price"
+            label="售价"
+            placeholder="请输入售价"
+            rules={[{ required: true, message: '请输入售价' }]}
+            fieldProps={{
+              precision: 2,
+              min: 0,
+              addonAfter: '元',
+            }}
+          />
+
+          <ProFormDigit
+            name="cost_price"
+            label="进货价"
+            placeholder="请输入进货价"
+            rules={[{ required: true, message: '请输入进货价' }]}
+            fieldProps={{
+              precision: 2,
+              min: 0,
+              addonAfter: '元',
+            }}
+          />
+
+          <ProFormDigit
+            name="discount_price"
+            label="优惠价格"
+            placeholder="请输入优惠价格（可选）"
+            dependency={['is_discounted']}
+            rules={[
+              ({ getFieldValue }: { getFieldValue: (name: string) => any }) => ({
+                validator(_: any, value: number) {
+                  const isDiscounted = getFieldValue('is_discounted');
+                  if (isDiscounted && (!value || value <= 0)) {
+                    return Promise.reject(new Error('开启优惠时必须设置优惠价格'));
+                  }
+                  return Promise.resolve();
+                },
+              }),
+            ]}
+            fieldProps={{
+              precision: 2,
+              min: 0,
+              addonAfter: '元',
+            }}
+          />
+
+          <ProFormSwitch name="is_discounted" label="是否优惠" tooltip="开启后需要设置优惠价格" />
+        </Col>
+
+        {/* 右列 */}
+        <Col span={12}>
+          <ProFormSelect
+            name="source_id"
+            label="货源"
+            placeholder="请选择货源"
+            options={sourceOptions}
+            rules={[{ required: true, message: '请选择货源' }]}
+          />
+
+          <ProFormText
+            name="shipping_time"
+            label="发货时间"
+            placeholder="请输入发货时间（可选）"
+            rules={[{ max: 100, message: '发货时间最多100个字符' }]}
+          />
+
+          <ProFormSelect
+            name="colors"
+            label="商品颜色"
+            placeholder="请选择商品颜色，也可以自定义输入"
+            mode="tags"
+            options={colorOptions}
+            allowClear
+            fieldProps={{
+              tokenSeparators: [','],
+            }}
+          />
+
+          {/* 图片上传区域 */}
+          <div style={{ marginTop: 16 }}>
+            <div style={{ marginBottom: 8, fontWeight: 500 }}>
+              商品图片
+              <span
+                style={{ fontSize: '12px', color: '#666', fontWeight: 'normal', marginLeft: 8 }}
+              >
+                （最多8张，第一张为主图）
+              </span>
             </div>
-          ) : attributeTemplate.length > 0 ? (
-            <>
-              {attributeTemplate
-                .sort((a, b) => a.sort - b.sort)
-                .map((attr) => renderAttributeField(attr))}
-            </>
-          ) : (
-            <Alert
-              message="该分类暂无属性"
-              description="当前选择的分类还没有绑定任何属性，您可以在分类管理中为此分类添加属性。"
-              type="warning"
-              showIcon
-            />
-          )}
-        </ProFormGroup>
-      )}
+            <Upload
+              listType="picture-card"
+              fileList={fileList}
+              onChange={handleUploadChange}
+              customRequest={customUpload}
+              onPreview={() => {
+                // 阻止默认的下载行为
+                return false;
+              }}
+              showUploadList={{
+                showPreviewIcon: false, // 隐藏默认的预览图标
+                showRemoveIcon: false, // 隐藏默认的删除图标
+                showDownloadIcon: false, // 隐藏默认的下载图标
+              }}
+              beforeUpload={(file) => {
+                // 验证文件类型
+                const isImage = file.type.startsWith('image/');
+                if (!isImage) {
+                  message.error('只能上传图片文件！');
+                  return false;
+                }
+
+                // 检查是否已存在相同名称的图片
+                const existingFile = fileList.find((f) => f.name === file.name);
+                if (existingFile) {
+                  message.error(`图片 "${file.name}" 已存在，请选择其他图片！`);
+                  return Upload.LIST_IGNORE; // 使用Upload.LIST_IGNORE来完全忽略文件
+                }
+
+                return true;
+              }}
+              accept="image/*"
+              multiple
+              itemRender={(originNode, file, fileList) => {
+                const index = fileList.findIndex((f) => f.uid === file.uid);
+
+                // 创建一个包装的originNode，阻止所有默认行为
+                const wrappedOriginNode = React.cloneElement(originNode as React.ReactElement, {
+                  onClick: (e: React.MouseEvent) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.nativeEvent.stopImmediatePropagation();
+                    return false;
+                  },
+                  onMouseDown: (e: React.MouseEvent) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.nativeEvent.stopImmediatePropagation();
+                    return false;
+                  },
+                  style: {
+                    ...(originNode as React.ReactElement).props.style,
+                    pointerEvents: 'none', // 禁用所有鼠标事件
+                  },
+                });
+
+                return (
+                  <div
+                    style={{ position: 'relative' }}
+                    onClick={(e) => {
+                      // 阻止默认的点击行为（下载）
+                      e.preventDefault();
+                      e.stopPropagation();
+                      e.nativeEvent.stopImmediatePropagation();
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      e.nativeEvent.stopImmediatePropagation();
+                    }}
+                  >
+                    {wrappedOriginNode}
+                    {/* 删除按钮 */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 4,
+                        right: 4,
+                        zIndex: 1,
+                      }}
+                    >
+                      <Popconfirm
+                        title="确定要删除这张图片吗？"
+                        onConfirm={(e) => {
+                          e?.stopPropagation();
+                          const newFileList = fileList.filter((_, i) => i !== index);
+                          setFileList(newFileList);
+                        }}
+                        okText="确定"
+                        cancelText="取消"
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.9)',
+                            border: '1px solid #d9d9d9',
+                            borderRadius: '4px',
+                            padding: '2px 4px',
+                            minWidth: 'auto',
+                            height: '24px',
+                          }}
+                          title="删除"
+                        />
+                      </Popconfirm>
+                    </div>
+                  </div>
+                );
+              }}
+            >
+              {fileList.length >= 8 ? null : (
+                <div>
+                  <PlusOutlined />
+                  <div style={{ marginTop: 8 }}>上传图片</div>
+                </div>
+              )}
+            </Upload>
+          </div>
+        </Col>
+      </Row>
     </ModalForm>
   );
 };

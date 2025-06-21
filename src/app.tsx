@@ -1,9 +1,10 @@
-import { AvatarDropdown, AvatarName, Footer, Question, SelectLang } from '@/components';
+import { AvatarDropdown, AvatarName, Footer } from '@/components';
 import { getUserProfile as queryCurrentUser } from '@/services/erp/user';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from '@umijs/max';
 import { history } from '@umijs/max';
+import { App } from 'antd';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 
@@ -83,7 +84,6 @@ export async function getInitialState(): Promise<{
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
 export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
   return {
-    actionsRender: () => [<Question key="doc" />, <SelectLang key="SelectLang" />],
     avatarProps: {
       render: () => {
         return (
@@ -105,11 +105,28 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
       }
     },
     menuHeaderRender: undefined,
-    // 防止菜单自动收缩
-    onCollapse: () => false,
     // 配置菜单属性，禁用手风琴模式
     menu: {
       autoClose: false,
+    },
+    // 侧边栏收缩相关配置
+    siderWidth: 208,
+    // 明确设置collapsed的初始状态
+    collapsed: false,
+    // 确保收缩按钮显示
+    collapsedButtonRender: (collapsed, defaultDom) => {
+      // 使用默认的收缩按钮
+      return defaultDom;
+    },
+    onCollapse: (collapsed: boolean) => {
+      // 更新全局状态中的collapsed值
+      setInitialState((preInitialState) => ({
+        ...preInitialState,
+        settings: {
+          ...preInitialState?.settings,
+          collapsed,
+        },
+      }));
     },
     // 自定义 403 页面
     // unAccessible: <div>unAccessible</div>,
@@ -117,7 +134,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     childrenRender: (children) => {
       // if (initialState?.loading) return <PageLoading />;
       return (
-        <>
+        <App>
           {children}
           {isDev && (
             <SettingDrawer
@@ -132,7 +149,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
               }}
             />
           )}
-        </>
+        </App>
       );
     },
     ...initialState?.settings,

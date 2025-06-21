@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-export * from './attribute';
-export * from './category';
+export * from './color';
 export * from './product';
+export * from './source';
 export * from './user';

@@ -1,5 +1,5 @@
 import { Footer } from '@/components';
-import { login as erpLogin } from '@/services/erp/user';
+import { login } from '@/services/erp/user';
 import { setToken, setUserInfo } from '@/utils/auth';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { LoginForm, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
@@ -8,7 +8,6 @@ import { Alert, message, Tabs } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
-import Settings from '../../../../config/defaultSettings';
 
 const useStyles = createStyles(({ token }: { token: any }) => {
   return {
@@ -93,7 +92,7 @@ const Login: React.FC = () => {
   const handleSubmit = async (values: API.LoginRequest) => {
     try {
       // 使用新的ERP登录API
-      const response = await erpLogin(values);
+      const response = await login(values);
 
       if (response.success) {
         // 保存token和用户信息
@@ -140,8 +139,8 @@ const Login: React.FC = () => {
           {intl.formatMessage({
             id: 'menu.login',
             defaultMessage: '登录页',
-          })}
-          - {Settings.title}
+          }) || '登录页'}
+          - ERP管理系统
         </title>
       </Helmet>
       <Lang />
@@ -157,8 +156,8 @@ const Login: React.FC = () => {
             maxWidth: '75vw',
           }}
           logo={<img alt="logo" src="/logo.svg" />}
-          title="Ant Design"
-          subTitle={intl.formatMessage({ id: 'pages.layouts.userLayout.title' })}
+          title="ERP管理系统"
+          subTitle="企业资源规划管理平台"
           initialValues={{
             autoLogin: true,
           }}

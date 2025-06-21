@@ -5,7 +5,7 @@ import { Card, message } from 'antd';
 import React, { useEffect, useState } from 'react';
 
 const Welcome: React.FC = () => {
-  const [_, setUserInfo] = useState<API.UserInfo | null>(null);
+  const [, setUserInfo] = useState<API.UserInfo | null>(null);
 
   const fetchUserInfo = async () => {
     try {
@@ -29,8 +29,8 @@ const Welcome: React.FC = () => {
 
   return (
     <PageContainer>
-      <Card title="欢迎使用ERP系统">
-        <p>这是一个基于Go语言构建的企业资源规划（ERP）系统。</p>
+      <Card title="欢迎">
+        <p>今天也要10W+！</p>
       </Card>
     </PageContainer>
   );

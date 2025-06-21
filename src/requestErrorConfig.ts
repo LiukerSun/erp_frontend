@@ -1,6 +1,6 @@
 ﻿import type { RequestOptions } from '@@/plugin-request/request';
 import type { RequestConfig } from '@umijs/max';
-import { message, notification } from 'antd';
+import { notification } from 'antd';
 
 // 错误处理方案： 错误类型
 enum ErrorShowType {
@@ -18,6 +18,26 @@ interface ResponseStructure {
   errorMessage?: string;
   showType?: ErrorShowType;
 }
+
+// 智能错误消息处理函数
+const showError = (content: string) => {
+  // 在非组件上下文中，使用 console.error 记录错误
+  console.error('Request Error:', content);
+  // 暂时禁用全局错误消息显示，让组件自己处理
+  // notification.error({
+  //   message: '请求失败',
+  //   description: content,
+  // });
+};
+
+const showWarning = (content: string) => {
+  console.warn('Request Warning:', content);
+  // 暂时禁用全局警告消息显示，让组件自己处理
+  // notification.warning({
+  //   message: '请求警告',
+  //   description: content,
+  // });
+};
 
 /**
  * @name 错误处理
@@ -51,14 +71,14 @@ export const errorConfig: RequestConfig = {
               // do nothing
               break;
             case ErrorShowType.WARN_MESSAGE:
-              message.warning(errorMessage);
+              showWarning(errorMessage || '未知警告');
               break;
             case ErrorShowType.ERROR_MESSAGE:
-              message.error(errorMessage);
+              showError(errorMessage || '未知错误');
               break;
             case ErrorShowType.NOTIFICATION:
               notification.open({
-                description: errorMessage,
+                description: errorMessage || '未知错误',
                 message: errorCode,
               });
               break;
@@ -66,21 +86,21 @@ export const errorConfig: RequestConfig = {
               // TODO: redirect
               break;
             default:
-              message.error(errorMessage);
+              showError(errorMessage || '未知错误');
           }
         }
       } else if (error.response) {
         // Axios 的错误
         // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
-        message.error(`Response status:${error.response.status}`);
+        showError(`Response status:${error.response.status}`);
       } else if (error.request) {
         // 请求已经成功发起，但没有收到响应
         // \`error.request\` 在浏览器中是 XMLHttpRequest 的实例，
         // 而在node.js中是 http.ClientRequest 的实例
-        message.error('None response! Please retry.');
+        showError('None response! Please retry.');
       } else {
         // 发送请求时出了点问题
-        message.error('Request error, please retry.');
+        showError('Request error, please retry.');
       }
     },
   },
@@ -104,11 +124,6 @@ export const errorConfig: RequestConfig = {
   responseInterceptors: [
     (response) => {
       // 拦截响应数据，进行个性化处理
-      const { data } = response as unknown as ResponseStructure;
-
-      if (data?.success === false) {
-        message.error('请求失败！');
-      }
       return response;
     },
   ],

@@ -1,12 +1,11 @@
 import { Footer } from '@/components';
-import { register as erpRegister } from '@/services/erp/user';
+import { register } from '@/services/erp/user';
 import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
 import { LoginForm, ProFormText } from '@ant-design/pro-components';
 import { FormattedMessage, Helmet, history, SelectLang, useIntl } from '@umijs/max';
 import { message } from 'antd';
 import { createStyles } from 'antd-style';
 import React from 'react';
-import Settings from '../../../../config/defaultSettings';
 
 const useStyles = createStyles(({ token }: { token: any }) => {
   return {
@@ -49,7 +48,7 @@ const Register: React.FC = () => {
 
   const handleSubmit = async (values: API.RegisterRequest) => {
     try {
-      const response = await erpRegister(values);
+      const response = await register(values);
 
       if (response.success) {
         const defaultRegisterSuccessMessage = intl.formatMessage({
@@ -81,8 +80,8 @@ const Register: React.FC = () => {
           {intl.formatMessage({
             id: 'menu.register',
             defaultMessage: '注册页',
-          })}
-          - {Settings.title}
+          }) || '注册页'}
+          - Ant Design Pro
         </title>
       </Helmet>
       <Lang />
