@@ -67,3 +67,101 @@ export async function getAttributeTypes(): Promise<API.Response<string[]>> {
     method: 'GET',
   });
 }
+
+// 分类属性绑定相关接口
+
+/**
+ * 获取分类的属性列表
+ */
+export async function getCategoryAttributes(
+  categoryId: number,
+): Promise<API.Response<API.CategoryAttributesResponse>> {
+  return request(`/api/categories/${categoryId}/attributes`, {
+    method: 'GET',
+  });
+}
+
+/**
+ * 获取分类的属性列表（包括继承的属性）
+ */
+export async function getCategoryAttributesWithInheritance(
+  categoryId: number,
+): Promise<API.Response<API.CategoryAttributesWithInheritanceResponse>> {
+  return request(`/api/categories/${categoryId}/attributes/inheritance`, {
+    method: 'GET',
+  });
+}
+
+/**
+ * 获取属性的继承路径
+ */
+export async function getAttributeInheritancePath(
+  categoryId: number,
+  attributeId: number,
+): Promise<API.Response<API.AttributeInheritancePathResponse>> {
+  return request(`/api/categories/${categoryId}/attributes/${attributeId}/inheritance`, {
+    method: 'GET',
+  });
+}
+
+/**
+ * 绑定属性到分类
+ */
+export async function bindAttributeToCategory(data: {
+  category_id: number;
+  attribute_id: number;
+  is_required?: boolean;
+  sort?: number;
+}): Promise<API.Response<API.CategoryAttributeInfo>> {
+  return request('/api/categories/attributes/bind', {
+    method: 'POST',
+    data,
+  });
+}
+
+/**
+ * 批量绑定属性到分类
+ */
+export async function batchBindAttributesToCategory(data: {
+  category_id: number;
+  attributes: Array<{
+    attribute_id: number;
+    is_required?: boolean;
+    sort?: number;
+  }>;
+}): Promise<API.Response<any>> {
+  return request('/api/categories/attributes/batch-bind', {
+    method: 'POST',
+    data,
+  });
+}
+
+/**
+ * 从分类解绑属性
+ */
+export async function unbindAttributeFromCategory(data: {
+  category_id: number;
+  attribute_id: number;
+}): Promise<API.Response<any>> {
+  return request('/api/categories/attributes/unbind', {
+    method: 'POST',
+    data,
+  });
+}
+
+/**
+ * 更新分类属性关联
+ */
+export async function updateCategoryAttribute(
+  categoryId: number,
+  attributeId: number,
+  data: {
+    is_required?: boolean;
+    sort?: number;
+  },
+): Promise<API.Response<API.CategoryAttributeInfo>> {
+  return request(`/api/categories/${categoryId}/attributes/${attributeId}`, {
+    method: 'PUT',
+    data,
+  });
+}

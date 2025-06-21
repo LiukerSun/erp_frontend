@@ -313,6 +313,83 @@ declare namespace API {
     validation?: ValidationRule;
   };
 
+  // ========== 分类属性绑定相关类型定义 ==========
+
+  // 分类属性关联信息
+  type CategoryAttributeInfo = {
+    id: number;
+    category_id: number;
+    attribute_id: number;
+    attribute: AttributeInfo;
+    is_required: boolean;
+    sort: number;
+    created_at: string;
+    updated_at: string;
+  };
+
+  // 带继承信息的分类属性关联信息
+  type CategoryAttributeWithInheritanceInfo = {
+    id: number;
+    category_id: number;
+    attribute_id: number;
+    attribute: AttributeInfo;
+    is_required: boolean;
+    sort: number;
+    is_inherited: boolean;
+    inherited_from?: number; // 继承来源分类ID
+    created_at: string;
+    updated_at: string;
+  };
+
+  // 分类属性列表响应
+  type CategoryAttributesResponse = {
+    category_id: number;
+    attributes: CategoryAttributeInfo[];
+  };
+
+  // 带继承信息的分类属性列表响应
+  type CategoryAttributesWithInheritanceResponse = {
+    category_id: number;
+    attributes: CategoryAttributeWithInheritanceInfo[];
+  };
+
+  // 属性继承路径响应
+  type AttributeInheritancePathResponse = {
+    attribute_id: number;
+    category_id: number;
+    path: CategoryAttributeWithInheritanceInfo[];
+  };
+
+  // 绑定属性到分类请求
+  type BindAttributeToCategoryRequest = {
+    category_id: number;
+    attribute_id: number;
+    is_required?: boolean;
+    sort?: number;
+  };
+
+  // 批量绑定属性到分类请求
+  type BatchBindAttributesToCategoryRequest = {
+    category_id: number;
+    attributes: Array<{
+      attribute_id: number;
+      is_required?: boolean;
+      sort?: number;
+    }>;
+  };
+
+  // 解绑分类属性请求
+  type UnbindAttributeFromCategoryRequest = {
+    category_id: number;
+    attribute_id: number;
+  };
+
+  // 更新分类属性关联请求
+  type UpdateCategoryAttributeRequest = {
+    is_required?: boolean;
+    sort?: number;
+  };
+
   // 通用响应类型（兼容BaseResponse）
   type Response<T = any> = BaseResponse<T>;
 }

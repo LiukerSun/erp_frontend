@@ -6,15 +6,16 @@ import {
 import {
   DeleteOutlined,
   DragOutlined,
-  EditOutlined,
   MoreOutlined,
   PlusOutlined,
   SearchOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import type { MenuProps, TreeDataNode } from 'antd';
 import { Button, Col, Dropdown, Input, message, Modal, Row, Select, Space, Tag, Tree } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
+import CategoryAttributeManager from './components/CategoryAttributeManager';
 import CategoryForm from './components/CategoryForm';
 
 interface CategoryTreeNode extends TreeDataNode {
@@ -42,6 +43,9 @@ const CategoryList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<boolean | undefined>(undefined);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [autoExpandParent, setAutoExpandParent] = useState(true);
+  // 新增属性管理相关状态
+  const [attributeManagerVisible, setAttributeManagerVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<API.CategoryInfo | null>(null);
 
   // 获取所有节点的key
   const getAllKeys = (categories: API.CategoryTreeInfo[]): React.Key[] => {
@@ -90,12 +94,7 @@ const CategoryList: React.FC = () => {
     setCategoryFormVisible(true);
   };
 
-  // 打开编辑分类表单
-  const handleEdit = (record: API.CategoryInfo) => {
-    setCurrentCategory(record);
-    setFormTitle('编辑分类');
-    setCategoryFormVisible(true);
-  };
+  // 注意：由于属性继承机制，现在不支持编辑分类，只能删除重新创建
 
   // 删除分类
   const handleDelete = async (record: API.CategoryInfo) => {
@@ -140,6 +139,12 @@ const CategoryList: React.FC = () => {
     }
   };
 
+  // 打开属性管理
+  const handleManageAttributes = (record: API.CategoryInfo) => {
+    setSelectedCategory(record);
+    setAttributeManagerVisible(true);
+  };
+
   // 表单提交成功回调
   const handleFormSuccess = () => {
     setCategoryFormVisible(false);
@@ -179,10 +184,10 @@ const CategoryList: React.FC = () => {
         onClick: () => handleAdd(node.id),
       },
       {
-        key: 'edit',
-        icon: <EditOutlined />,
-        label: '编辑',
-        onClick: () => handleEdit(node),
+        key: 'manageAttributes',
+        icon: <SettingOutlined />,
+        label: '管理属性',
+        onClick: () => handleManageAttributes(node),
       },
       {
         key: 'move',
@@ -201,7 +206,8 @@ const CategoryList: React.FC = () => {
         onClick: () => {
           Modal.confirm({
             title: '确定要删除这个分类吗？',
-            content: '删除分类可能会影响相关产品，请谨慎操作。',
+            content:
+              '由于属性继承机制，分类不支持编辑，如需修改请删除后重新创建。删除分类可能会影响相关产品和子分类，请谨慎操作。',
             onOk: () => handleDelete(node),
           });
         },
@@ -460,6 +466,12 @@ const CategoryList: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      <CategoryAttributeManager
+        visible={attributeManagerVisible}
+        onCancel={() => setAttributeManagerVisible(false)}
+        category={selectedCategory}
+      />
     </PageContainer>
   );
 };
