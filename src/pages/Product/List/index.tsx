@@ -1,8 +1,14 @@
 import { deleteProduct, getAllColors, getProductList } from '@/services/erp/product';
 import { getActiveSourceList } from '@/services/erp/source';
 import { exportProductListToExcel, generateExportMenuItems } from '@/utils/excel-export';
+import { ImageExporter, ProductImageExportItem } from '@/utils/image-export';
 import { ImageProcessor } from '@/utils/oss-upload';
-import { BarcodeOutlined, DownloadOutlined, DownOutlined } from '@ant-design/icons';
+import {
+  BarcodeOutlined,
+  DownloadOutlined,
+  DownOutlined,
+  PictureOutlined,
+} from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
@@ -130,6 +136,68 @@ const ProductList: React.FC = () => {
 
     // 跳转到条形码生成器页面
     history.push('/product-management/barcode?from=product-list');
+  };
+
+  // 导出产品图片
+  const handleExportImages = async () => {
+    if (selectedRows.length === 0) {
+      message.warning('请先选择要导出图片的产品');
+      return;
+    }
+
+    // 过滤出有图片的产品
+    const productsWithImages = selectedRows.filter(
+      (product) => product.images && product.images.length > 0,
+    );
+
+    if (productsWithImages.length === 0) {
+      message.warning('选中的产品没有图片');
+      return;
+    }
+
+    // 转换为导出格式
+    const exportData: ProductImageExportItem[] = productsWithImages.map((product) => ({
+      productId: product.id,
+      productName: product.name,
+      sku: product.sku,
+      images: (product.images || []).map((img) => ({
+        url: img.url,
+        isMain: img.is_main || false,
+        sort: img.sort || 0,
+        alt: img.alt,
+        title: img.title,
+      })),
+    }));
+
+    // 显示预览信息
+    const preview = ImageExporter.getExportPreview(exportData);
+
+    // 确认导出
+    Modal.confirm({
+      title: '确认导出图片',
+      content: (
+        <div>
+          <p>将导出以下内容：</p>
+          <ul>
+            <li>产品数量：{preview.totalProducts}</li>
+            <li>有图片的产品：{preview.productsWithImages}</li>
+            <li>图片总数：{preview.totalImages}</li>
+          </ul>
+          <p>确定要开始导出吗？</p>
+        </div>
+      ),
+      onOk: async () => {
+        try {
+          await ImageExporter.exportProductImages(exportData, {
+            fileName: `产品图片_${new Date().toISOString().slice(0, 10)}`,
+          });
+        } catch (error) {
+          console.error('导出图片失败:', error);
+        }
+      },
+      okText: '开始导出',
+      cancelText: '取消',
+    });
   };
 
   // 表单提交成功回调
@@ -507,6 +575,14 @@ const ProductList: React.FC = () => {
             disabled={selectedRows.length === 0}
           >
             生成条形码 ({selectedRows.length})
+          </Button>,
+          <Button
+            key="exportImages"
+            icon={<PictureOutlined />}
+            onClick={handleExportImages}
+            disabled={selectedRows.length === 0}
+          >
+            导出图片 ({selectedRows.length})
           </Button>,
           <Dropdown key="export" menu={{ items: exportMenuItems }} placement="bottomLeft">
             <Button icon={<DownloadOutlined />}>
