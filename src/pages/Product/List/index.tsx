@@ -1,18 +1,38 @@
+import PricePositionPreview from '@/components/PricePositionPreview';
 import { deleteProduct, getAllColors, getProductList } from '@/services/erp/product';
 import { getActiveSourceList } from '@/services/erp/source';
+import { ConfigManager, ImageComposeConfig } from '@/utils/config-manager';
 import { exportProductListToExcel, generateExportMenuItems } from '@/utils/excel-export';
-import { ImageExporter, ProductImageExportItem } from '@/utils/image-export';
-import { ImageProcessor } from '@/utils/oss-upload';
+import { ImageExporter, ProductComposeItem, ProductImageExportItem } from '@/utils/image-export';
+import { ImageComposeConfigOptions, ImageProcessOptions } from '@/utils/image-processor';
+import { ImageProcessor as OSSImageProcessor } from '@/utils/oss-upload';
 import {
   BarcodeOutlined,
   DownloadOutlined,
   DownOutlined,
   PictureOutlined,
+  PlusOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
-import { Button, Dropdown, Image, message, Modal, Popconfirm, Space, Tag } from 'antd';
+import {
+  Button,
+  Dropdown,
+  Form,
+  Image,
+  Input,
+  InputNumber,
+  message,
+  Modal,
+  Popconfirm,
+  Select,
+  Space,
+  Switch,
+  Tag,
+  Upload,
+} from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import ProductForm from './components/ProductForm';
 
@@ -32,6 +52,18 @@ const ProductList: React.FC = () => {
   // 筛选数据
   const [sources, setSources] = useState<API.Source[]>([]);
   const [colors, setColors] = useState<API.Color[]>([]);
+  // 图片处理配置
+  const [imageProcessConfigVisible, setImageProcessConfigVisible] = useState(false);
+  const [imageProcessOptions, setImageProcessOptions] = useState<ImageProcessOptions>({});
+  const [processConfigForm] = Form.useForm();
+  // 图片合成配置
+  const [imageComposeConfigVisible, setImageComposeConfigVisible] = useState(false);
+  const [composeConfigForm] = Form.useForm();
+  const [frameImageUrl, setFrameImageUrl] = useState<string>('');
+  // 配置管理
+  const [configList, setConfigList] = useState<string[]>([]);
+  const [currentConfigName, setCurrentConfigName] = useState<string>('');
+  const [configManagementVisible, setConfigManagementVisible] = useState(false);
 
   // 获取筛选数据
   useEffect(() => {
@@ -54,6 +86,43 @@ const ProductList: React.FC = () => {
     };
 
     fetchFilterData();
+  }, []);
+
+  // 加载配置到表单
+  const loadConfigToForm = (config: ImageComposeConfig) => {
+    composeConfigForm.setFieldsValue({
+      canvasSize: config.canvasSize || 800,
+      quality: config.quality || 90,
+      format: config.format || 'jpeg',
+      useFrame: config.useFrame || false,
+      frameSize: config.frameSize || 800,
+      pricePosition: config.pricePosition,
+      priceX: config.priceX,
+      priceY: config.priceY,
+      priceFontSize: config.priceFontSize || 24,
+      priceColor: config.priceColor || '#ff4d4f',
+      priceFontFamily: config.priceFontFamily || 'Arial',
+    });
+
+    if (config.frameImageUrl) {
+      setFrameImageUrl(config.frameImageUrl);
+    }
+  };
+  // 加载配置列表
+  useEffect(() => {
+    const loadConfigList = () => {
+      const configs = ConfigManager.getConfigNames();
+      setConfigList(configs);
+
+      // 加载默认配置
+      const defaultConfig = ConfigManager.getDefaultConfig();
+      if (defaultConfig) {
+        setCurrentConfigName(defaultConfig.name);
+        loadConfigToForm(defaultConfig);
+      }
+    };
+
+    loadConfigList();
   }, []);
 
   // 关闭图片预览
@@ -138,6 +207,190 @@ const ProductList: React.FC = () => {
     history.push('/product-management/barcode?from=product-list');
   };
 
+  // 打开图片处理配置
+  const handleOpenImageProcessConfig = () => {
+    setImageProcessConfigVisible(true);
+    // 重置表单
+    processConfigForm.resetFields();
+  };
+
+  // 确认图片处理配置
+  const handleConfirmImageProcessConfig = async () => {
+    try {
+      const values = await processConfigForm.validateFields();
+
+      // 构建处理选项
+      const options: ImageProcessOptions = {};
+
+      if (values.resize) {
+        options.resize = {
+          width: values.resizeWidth,
+          height: values.resizeHeight,
+          maintainAspectRatio: values.maintainAspectRatio,
+        };
+      }
+
+      if (values.quality !== undefined) {
+        options.quality = values.quality / 100; // 转换为0-1范围
+      }
+
+      if (values.format) {
+        options.format = values.format;
+      }
+
+      if (values.brightness !== undefined) {
+        options.brightness = values.brightness;
+      }
+
+      if (values.contrast !== undefined) {
+        options.contrast = values.contrast;
+      }
+
+      if (values.saturation !== undefined) {
+        options.saturation = values.saturation;
+      }
+
+      if (values.blur !== undefined) {
+        options.blur = values.blur;
+      }
+
+      if (values.sharpen) {
+        options.sharpen = true;
+      }
+
+      if (values.watermark && values.watermarkText) {
+        options.watermark = {
+          text: values.watermarkText,
+          position: values.watermarkPosition || 'bottom-right',
+          fontSize: values.watermarkFontSize,
+          color: values.watermarkColor,
+          opacity: values.watermarkOpacity / 100, // 转换为0-1范围
+        };
+      }
+
+      setImageProcessOptions(options);
+      setImageProcessConfigVisible(false);
+      message.success('图片处理配置已保存');
+    } catch (error) {
+      console.error('配置验证失败:', error);
+    }
+  };
+
+  // 打开图片合成配置
+  const handleOpenImageComposeConfig = () => {
+    setImageComposeConfigVisible(true);
+    // 重置表单
+    composeConfigForm.resetFields();
+    setFrameImageUrl('');
+  };
+
+  // 确认图片合成配置
+  const handleConfirmImageComposeConfig = async () => {
+    try {
+      const values = await composeConfigForm.validateFields();
+
+      // 验证图框图片
+      if (values.useFrame && !frameImageUrl) {
+        message.error('请上传图框图片');
+        return;
+      }
+
+      setImageComposeConfigVisible(false);
+      message.success('图片合成配置已保存');
+    } catch (error) {
+      console.error('配置验证失败:', error);
+    }
+  };
+
+  // 保存当前配置
+  const handleSaveConfig = async () => {
+    try {
+      const values = await composeConfigForm.validateFields();
+
+      const config: ImageComposeConfig = {
+        name: values.configName || `配置_${new Date().toISOString().slice(0, 19)}`,
+        description: values.configDescription,
+        canvasSize: values.canvasSize || 800,
+        quality: values.quality || 90,
+        format: values.format || 'jpeg',
+        useFrame: values.useFrame || false,
+        frameSize: values.frameSize || 800,
+        frameImageUrl: frameImageUrl,
+        pricePosition: values.pricePosition,
+        priceX: values.priceX,
+        priceY: values.priceY,
+        priceFontSize: values.priceFontSize || 24,
+        priceColor: values.priceColor || '#ff4d4f',
+        priceFontFamily: values.priceFontFamily || 'Arial',
+        priceBackgroundColor: 'transparent',
+        pricePadding: 0,
+        priceBorderRadius: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      ConfigManager.saveConfig(config);
+      setConfigList(ConfigManager.getConfigNames());
+      message.success('配置保存成功');
+    } catch (error) {
+      console.error('保存配置失败:', error);
+      message.error('保存配置失败');
+    }
+  };
+
+  // 加载配置
+  const handleLoadConfig = (configName: string) => {
+    const config = ConfigManager.loadConfig(configName);
+    if (config) {
+      setCurrentConfigName(configName);
+      loadConfigToForm(config);
+      message.success(`已加载配置: ${configName}`);
+    } else {
+      message.error('加载配置失败');
+    }
+  };
+
+  // 删除配置
+  const handleDeleteConfig = (configName: string) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除配置 "${configName}" 吗？`,
+      onOk: () => {
+        if (ConfigManager.deleteConfig(configName)) {
+          setConfigList(ConfigManager.getConfigNames());
+          if (currentConfigName === configName) {
+            setCurrentConfigName('');
+            composeConfigForm.resetFields();
+          }
+          message.success('配置删除成功');
+        } else {
+          message.error('删除配置失败');
+        }
+      },
+    });
+  };
+
+  // 设置默认配置
+  const handleSetDefaultConfig = (configName: string) => {
+    if (ConfigManager.setDefaultConfig(configName)) {
+      setCurrentConfigName(configName);
+      message.success(`已设置默认配置: ${configName}`);
+    } else {
+      message.error('设置默认配置失败');
+    }
+  };
+
+  // 处理图框图片上传
+  const handleFrameImageUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setFrameImageUrl(result);
+    };
+    reader.readAsDataURL(file);
+    return false; // 阻止自动上传
+  };
+
   // 导出产品图片
   const handleExportImages = async () => {
     if (selectedRows.length === 0) {
@@ -170,7 +423,7 @@ const ProductList: React.FC = () => {
     }));
 
     // 显示预览信息
-    const preview = ImageExporter.getExportPreview(exportData);
+    const preview = ImageExporter.getExportPreview(exportData, imageProcessOptions);
 
     // 确认导出
     Modal.confirm({
@@ -182,6 +435,8 @@ const ProductList: React.FC = () => {
             <li>产品数量：{preview.totalProducts}</li>
             <li>有图片的产品：{preview.productsWithImages}</li>
             <li>图片总数：{preview.totalImages}</li>
+            <li>预估大小：{preview.estimatedSize}</li>
+            {preview.processingInfo && <li>处理选项：{preview.processingInfo}</li>}
           </ul>
           <p>确定要开始导出吗？</p>
         </div>
@@ -190,12 +445,105 @@ const ProductList: React.FC = () => {
         try {
           await ImageExporter.exportProductImages(exportData, {
             fileName: `产品图片_${new Date().toISOString().slice(0, 10)}`,
+            processOptions: imageProcessOptions,
           });
         } catch (error) {
           console.error('导出图片失败:', error);
         }
       },
       okText: '开始导出',
+      cancelText: '取消',
+    });
+  };
+
+  // 导出合成图片
+  const handleExportComposedImages = async () => {
+    if (selectedRows.length === 0) {
+      message.warning('请先选择要导出合成图片的产品');
+      return;
+    }
+
+    // 过滤出有主图的产品
+    const productsWithMainImage = selectedRows.filter(
+      (product) =>
+        product.images && product.images.length > 0 && product.images.some((img) => img.is_main),
+    );
+
+    if (productsWithMainImage.length === 0) {
+      message.warning('选中的产品没有主图');
+      return;
+    }
+
+    // 获取合成配置
+    const composeValues = composeConfigForm.getFieldsValue();
+
+    // 转换为合成格式
+    const composeData: ProductComposeItem[] = productsWithMainImage.map((product) => {
+      const mainImage = product.images?.find((img) => img.is_main) || product.images?.[0];
+      return {
+        productId: product.id,
+        productName: product.name,
+        sku: product.sku,
+        price: product.price,
+        mainImageUrl: mainImage?.url || '',
+      };
+    });
+
+    // 构建合成选项
+    const composeOptions: ImageComposeConfigOptions = {
+      canvasSize: composeValues.canvasSize || 800,
+      quality: (composeValues.quality || 90) / 100,
+      format: composeValues.format || 'jpeg',
+      pricePosition: composeValues.pricePosition,
+      priceX: composeValues.priceX,
+      priceY: composeValues.priceY,
+      priceFontSize: composeValues.priceFontSize || 24,
+      priceColor: composeValues.priceColor || '#ff4d4f',
+      priceFontFamily: composeValues.priceFontFamily || 'Arial',
+      priceBackgroundColor: 'transparent',
+      pricePadding: 0,
+      priceBorderRadius: 0,
+    };
+
+    // 如果有图框，添加到选项
+    if (composeValues.useFrame && frameImageUrl) {
+      composeOptions.frameImage = {
+        url: frameImageUrl,
+        size: composeValues.frameSize || composeValues.canvasSize || 800,
+      };
+    }
+
+    // 显示预览信息
+    const preview = ImageExporter.getComposePreview(composeData, composeOptions);
+
+    // 确认导出
+    Modal.confirm({
+      title: '确认导出合成图片',
+      content: (
+        <div>
+          <p>将合成以下内容：</p>
+          <ul>
+            <li>产品数量：{preview.totalProducts}</li>
+            <li>
+              画布尺寸：{preview.canvasSize}x{preview.canvasSize}px
+            </li>
+            <li>预估大小：{preview.estimatedSize}</li>
+            <li>合成选项：{preview.composeInfo}</li>
+          </ul>
+          <p>确定要开始合成导出吗？</p>
+        </div>
+      ),
+      onOk: async () => {
+        try {
+          await ImageExporter.exportComposedImages(composeData, {
+            fileName: `合成图片_${new Date().toISOString().slice(0, 10)}`,
+            composeOptions,
+          });
+        } catch (error) {
+          console.error('导出合成图片失败:', error);
+        }
+      },
+      okText: '开始合成导出',
       cancelText: '取消',
     });
   };
@@ -280,7 +628,7 @@ const ProductList: React.FC = () => {
         // 如果只有一张图片，显示单张缩略图
         if (images.length === 1) {
           const image = images[0];
-          const thumbnailUrl = ImageProcessor.generateThumbnailUrl(image.url, 60, 60, 80, 'jpg');
+          const thumbnailUrl = OSSImageProcessor.generateThumbnailUrl(image.url, 60, 60, 80, 'jpg');
 
           return (
             <div style={{ cursor: 'pointer' }} onClick={() => handleImagePreview(images, 0)}>
@@ -304,7 +652,7 @@ const ProductList: React.FC = () => {
         return (
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             {displayImages.map((image, index) => {
-              const thumbnailUrl = ImageProcessor.generateThumbnailUrl(
+              const thumbnailUrl = OSSImageProcessor.generateThumbnailUrl(
                 image.url,
                 50,
                 50,
@@ -584,6 +932,30 @@ const ProductList: React.FC = () => {
           >
             导出图片 ({selectedRows.length})
           </Button>,
+          <Button
+            key="exportComposedImages"
+            icon={<PlusOutlined />}
+            onClick={handleExportComposedImages}
+            disabled={selectedRows.length === 0}
+          >
+            导出合成图片 ({selectedRows.length})
+          </Button>,
+          <Button
+            key="imageProcessConfig"
+            icon={<SettingOutlined />}
+            onClick={handleOpenImageProcessConfig}
+            disabled={selectedRows.length === 0}
+          >
+            图片处理配置
+          </Button>,
+          <Button
+            key="imageComposeConfig"
+            icon={<SettingOutlined />}
+            onClick={handleOpenImageComposeConfig}
+            disabled={selectedRows.length === 0}
+          >
+            图片合成配置
+          </Button>,
           <Dropdown key="export" menu={{ items: exportMenuItems }} placement="bottomLeft">
             <Button icon={<DownloadOutlined />}>
               导出Excel <DownOutlined />
@@ -669,6 +1041,386 @@ const ProductList: React.FC = () => {
         onSuccess={handleFormSuccess}
         onVisibleChange={setProductFormVisible}
       />
+
+      {/* 图片处理配置弹窗 */}
+      <Modal
+        title="图片处理配置"
+        open={imageProcessConfigVisible}
+        onOk={handleConfirmImageProcessConfig}
+        onCancel={() => setImageProcessConfigVisible(false)}
+        width={600}
+        okText="确认配置"
+        cancelText="取消"
+      >
+        <Form
+          form={processConfigForm}
+          layout="vertical"
+          initialValues={{
+            maintainAspectRatio: true,
+            quality: 80,
+            format: 'jpeg',
+            watermarkPosition: 'bottom-right',
+            watermarkFontSize: 16,
+            watermarkColor: '#ffffff',
+            watermarkOpacity: 30,
+          }}
+        >
+          <Form.Item label="调整尺寸" name="resize" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+
+          <Form.Item
+            noStyle
+            shouldUpdate={(prevValues, currentValues) => prevValues.resize !== currentValues.resize}
+          >
+            {({ getFieldValue }) =>
+              getFieldValue('resize') ? (
+                <div style={{ marginLeft: 24 }}>
+                  <Form.Item label="宽度 (px)" name="resizeWidth">
+                    <InputNumber
+                      min={1}
+                      max={5000}
+                      placeholder="留空保持比例"
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                  <Form.Item label="高度 (px)" name="resizeHeight">
+                    <InputNumber
+                      min={1}
+                      max={5000}
+                      placeholder="留空保持比例"
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                  <Form.Item name="maintainAspectRatio" valuePropName="checked">
+                    <Switch checkedChildren="保持宽高比" unCheckedChildren="不保持宽高比" />
+                  </Form.Item>
+                </div>
+              ) : null
+            }
+          </Form.Item>
+
+          <Form.Item label="图片质量 (%)" name="quality">
+            <InputNumber min={1} max={100} style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item label="输出格式" name="format">
+            <Select>
+              <Select.Option value="jpeg">JPEG</Select.Option>
+              <Select.Option value="png">PNG</Select.Option>
+              <Select.Option value="webp">WebP</Select.Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item label="亮度调整" name="brightness">
+            <InputNumber min={-100} max={100} placeholder="-100 到 100" style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item label="对比度调整" name="contrast">
+            <InputNumber min={-100} max={100} placeholder="-100 到 100" style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item label="饱和度调整" name="saturation">
+            <InputNumber min={-100} max={100} placeholder="-100 到 100" style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item label="模糊效果" name="blur">
+            <InputNumber min={0} max={10} placeholder="0 到 10" style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item label="锐化处理" name="sharpen" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+
+          <Form.Item label="添加水印" name="watermark" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+
+          <Form.Item
+            noStyle
+            shouldUpdate={(prevValues, currentValues) =>
+              prevValues.watermark !== currentValues.watermark
+            }
+          >
+            {({ getFieldValue }) =>
+              getFieldValue('watermark') ? (
+                <div style={{ marginLeft: 24 }}>
+                  <Form.Item
+                    label="水印文字"
+                    name="watermarkText"
+                    rules={[{ required: true, message: '请输入水印文字' }]}
+                  >
+                    <Input placeholder="请输入水印文字" />
+                  </Form.Item>
+                  <Form.Item label="水印位置" name="watermarkPosition">
+                    <Select>
+                      <Select.Option value="top-left">左上角</Select.Option>
+                      <Select.Option value="top-right">右上角</Select.Option>
+                      <Select.Option value="bottom-left">左下角</Select.Option>
+                      <Select.Option value="bottom-right">右下角</Select.Option>
+                      <Select.Option value="center">居中</Select.Option>
+                    </Select>
+                  </Form.Item>
+                  <Form.Item label="字体大小 (px)" name="watermarkFontSize">
+                    <InputNumber min={8} max={72} style={{ width: '100%' }} />
+                  </Form.Item>
+                  <Form.Item label="字体颜色" name="watermarkColor">
+                    <Input type="color" style={{ width: '100%' }} />
+                  </Form.Item>
+                  <Form.Item label="透明度 (%)" name="watermarkOpacity">
+                    <InputNumber min={1} max={100} style={{ width: '100%' }} />
+                  </Form.Item>
+                </div>
+              ) : null
+            }
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 图片合成配置弹窗 */}
+      <Modal
+        title="图片合成配置"
+        open={imageComposeConfigVisible}
+        onOk={handleConfirmImageComposeConfig}
+        onCancel={() => setImageComposeConfigVisible(false)}
+        width={600}
+        okText="确认配置"
+        cancelText="取消"
+      >
+        <Form
+          form={composeConfigForm}
+          layout="vertical"
+          initialValues={{
+            canvasSize: 800,
+            quality: 90,
+            format: 'jpeg',
+            useFrame: false,
+            frameSize: 800,
+            pricePosition: 'top-right',
+            priceX: undefined,
+            priceY: undefined,
+            priceFontSize: 24,
+            priceColor: '#ff4d4f',
+            priceBackgroundColor: 'transparent',
+            pricePadding: 0,
+            priceBorderRadius: 0,
+          }}
+        >
+          <div style={{ display: 'flex', gap: 16 }}>
+            {/* 左排：文字位置和样式配置 */}
+            <div style={{ flex: 1 }}>
+              {/* 文字位置配置 */}
+              <Form.Item label="文字位置" name="pricePosition">
+                <Select placeholder="选择预设位置或使用自定义坐标">
+                  <Select.Option value="top-left">左上角</Select.Option>
+                  <Select.Option value="top-right">右上角</Select.Option>
+                  <Select.Option value="bottom-left">左下角</Select.Option>
+                  <Select.Option value="bottom-right">右下角</Select.Option>
+                  <Select.Option value="center">居中</Select.Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item label="自定义X坐标 (px)" name="priceX">
+                <InputNumber
+                  min={0}
+                  max={800}
+                  placeholder="留空使用预设位置"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+
+              <Form.Item label="自定义Y坐标 (px)" name="priceY">
+                <InputNumber
+                  min={0}
+                  max={800}
+                  placeholder="留空使用预设位置"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+
+              {/* 文字样式配置 */}
+              <Form.Item label="文字字体" name="priceFontFamily">
+                <Select defaultValue="Arial">
+                  <Select.Option value="Arial">Arial</Select.Option>
+                  <Select.Option value="Helvetica">Helvetica</Select.Option>
+                  <Select.Option value="Times New Roman">Times New Roman</Select.Option>
+                  <Select.Option value="Georgia">Georgia</Select.Option>
+                  <Select.Option value="Verdana">Verdana</Select.Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item label="文字大小 (px)" name="priceFontSize">
+                <InputNumber min={8} max={72} style={{ width: '100%' }} />
+              </Form.Item>
+
+              <Form.Item label="文字颜色" name="priceColor">
+                <Input type="color" style={{ width: '100%' }} />
+              </Form.Item>
+
+              {/* 图框配置 */}
+              <Form.Item label="使用图框" name="useFrame" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+
+              <Form.Item
+                noStyle
+                shouldUpdate={(prevValues, currentValues) =>
+                  prevValues.useFrame !== currentValues.useFrame
+                }
+              >
+                {({ getFieldValue }) =>
+                  getFieldValue('useFrame') ? (
+                    <div style={{ marginLeft: 24 }}>
+                      <Form.Item label="上传图框图片" required>
+                        <Upload
+                          accept="image/*"
+                          beforeUpload={handleFrameImageUpload}
+                          showUploadList={false}
+                        >
+                          <Button icon={<PlusOutlined />}>选择图框图片</Button>
+                        </Upload>
+                        {frameImageUrl && (
+                          <div style={{ marginTop: 8 }}>
+                            <Image
+                              src={frameImageUrl}
+                              alt="图框预览"
+                              width={100}
+                              height={100}
+                              style={{ objectFit: 'cover', borderRadius: 4 }}
+                            />
+                          </div>
+                        )}
+                      </Form.Item>
+                    </div>
+                  ) : null
+                }
+              </Form.Item>
+            </div>
+
+            {/* 右排：位置预览和配置管理 */}
+            <div style={{ flex: 1 }}>
+              {/* 位置预览 */}
+              <Form.Item label="位置预览">
+                <div
+                  style={{
+                    width: 200,
+                    height: 200,
+                    border: '1px solid #d9d9d9',
+                    borderRadius: 4,
+                    position: 'relative',
+                    backgroundColor: '#f5f5f5',
+                    margin: '0 auto',
+                  }}
+                >
+                  <Form.Item noStyle shouldUpdate>
+                    {() => (
+                      <PricePositionPreview
+                        position={composeConfigForm.getFieldValue('pricePosition')}
+                        x={composeConfigForm.getFieldValue('priceX')}
+                        y={composeConfigForm.getFieldValue('priceY')}
+                        fontSize={composeConfigForm.getFieldValue('priceFontSize') || 24}
+                        color={composeConfigForm.getFieldValue('priceColor') || '#ff4d4f'}
+                        fontFamily={composeConfigForm.getFieldValue('priceFontFamily') || 'Arial'}
+                      />
+                    )}
+                  </Form.Item>
+                </div>
+              </Form.Item>
+
+              {/* 配置管理 */}
+              <Form.Item label="配置名称" name="configName">
+                <Input placeholder="输入配置名称以保存当前设置" />
+              </Form.Item>
+
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                <Button onClick={handleSaveConfig} type="primary">
+                  保存配置
+                </Button>
+                <Button onClick={() => setConfigManagementVisible(true)}>管理配置</Button>
+              </div>
+
+              {configList.length > 0 && (
+                <Form.Item label="快速加载配置">
+                  <Select
+                    placeholder="选择要加载的配置"
+                    onChange={handleLoadConfig}
+                    style={{ width: '100%' }}
+                  >
+                    {configList.map((name) => (
+                      <Select.Option key={name} value={name}>
+                        {name} {currentConfigName === name ? '(当前)' : ''}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              )}
+            </div>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* 配置管理弹窗 */}
+      <Modal
+        title="配置管理"
+        open={configManagementVisible}
+        onCancel={() => setConfigManagementVisible(false)}
+        footer={null}
+        width={800}
+      >
+        <div>
+          <h3>已保存的配置</h3>
+          {configList.length === 0 ? (
+            <p>暂无保存的配置</p>
+          ) : (
+            <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+              {configList.map((name) => {
+                const config = ConfigManager.loadConfig(name);
+                return (
+                  <div
+                    key={name}
+                    style={{
+                      border: '1px solid #d9d9d9',
+                      borderRadius: 8,
+                      padding: 16,
+                      marginBottom: 12,
+                      backgroundColor: currentConfigName === name ? '#f0f8ff' : '#fff',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 8,
+                      }}
+                    >
+                      <h4 style={{ margin: 0 }}>{name}</h4>
+                      <Space>
+                        <Button size="small" onClick={() => handleLoadConfig(name)}>
+                          加载
+                        </Button>
+                        <Button size="small" onClick={() => handleSetDefaultConfig(name)}>
+                          设为默认
+                        </Button>
+                        <Button size="small" danger onClick={() => handleDeleteConfig(name)}>
+                          删除
+                        </Button>
+                      </Space>
+                    </div>
+                    {config?.description && (
+                      <p style={{ margin: '8px 0', color: '#666' }}>{config.description}</p>
+                    )}
+                    <div style={{ fontSize: '12px', color: '#999' }}>
+                      创建时间:{' '}
+                      {config?.createdAt ? new Date(config.createdAt).toLocaleString() : '未知'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </Modal>
 
       <Modal
         open={imagePreviewVisible}
@@ -774,7 +1526,7 @@ const ProductList: React.FC = () => {
                 onClick={() => setImagePreviewIndex(index)}
               >
                 <img
-                  src={ImageProcessor.generateThumbnailUrl(url, 60, 60, 80, 'jpg')}
+                  src={OSSImageProcessor.generateThumbnailUrl(url, 60, 60, 80, 'jpg')}
                   alt={`缩略图${index + 1}`}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
