@@ -853,6 +853,24 @@ const ProductList: React.FC = () => {
       },
     },
     {
+      title: '启用状态',
+      dataIndex: 'is_enabled',
+      width: 100,
+      valueType: 'select',
+      fieldProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '已启用', value: 'true' },
+          { label: '已禁用', value: 'false' },
+        ],
+      },
+      render: (_, record) => {
+        const color = record.is_enabled ? 'green' : 'red';
+        const text = record.is_enabled ? '已启用' : '已禁用';
+        return <Tag color={color}>{text}</Tag>;
+      },
+    },
+    {
       title: '创建时间',
       dataIndex: 'createdAt',
       width: 180,
@@ -905,6 +923,7 @@ const ProductList: React.FC = () => {
             price: { show: true },
             colors: { show: true },
             source_id: { show: true },
+            is_enabled: { show: true },
             option: { show: true, fixed: 'right' },
             // 默认隐藏的列
             product_code: { show: false },
@@ -987,6 +1006,8 @@ const ProductList: React.FC = () => {
               max_price: params.price_range?.[1] ? Number(params.price_range[1]) : undefined,
               is_discounted:
                 params.is_discounted !== undefined ? params.is_discounted === 'true' : undefined,
+              is_enabled:
+                params.is_enabled !== undefined ? params.is_enabled === 'true' : undefined,
               colors: params.colors
                 ? Array.isArray(params.colors)
                   ? params.colors

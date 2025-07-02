@@ -271,6 +271,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
     cost_price: undefined,
     discount_price: undefined,
     is_discounted: false,
+    is_enabled: true,
     source_id: undefined,
     shipping_time: '',
     colors: [],
@@ -396,6 +397,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
           />
 
           <ProFormSwitch name="is_discounted" label="是否优惠" tooltip="开启后需要设置优惠价格" />
+
+          <ProFormSwitch
+            name="is_enabled"
+            label="是否启用"
+            tooltip="控制商品是否在系统中可见和可操作"
+          />
         </Col>
 
         {/* 右列 */}

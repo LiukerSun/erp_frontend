@@ -137,6 +137,7 @@ declare namespace API {
     cost_price: number;
     discount_price?: number;
     is_discounted: boolean;
+    is_enabled: boolean;
     source_id?: number;
     source?: Source;
     shipping_time?: string;
@@ -159,9 +160,10 @@ declare namespace API {
     min_price?: number; // 最低价格
     max_price?: number; // 最高价格
     is_discounted?: boolean; // 是否优惠筛选
+    is_enabled?: boolean; // 是否启用筛选
     colors?: string[]; // 颜色筛选（可多选）
     shipping_time?: string; // 发货时间筛选（模糊匹配）
-    order_by?: 'price' | 'created_at' | 'updated_at' | 'name'; // 排序字段
+    order_by?: 'price' | 'created_at' | 'updated_at' | 'name' | 'is_enabled'; // 排序字段
     order_dir?: 'asc' | 'desc'; // 排序方向
   };
 
@@ -179,6 +181,7 @@ declare namespace API {
     cost_price: number;
     discount_price?: number;
     is_discounted?: boolean;
+    is_enabled?: boolean;
     source_id?: number;
     shipping_time?: string;
     images?: ProductImage[]; // 商品图片列表
