@@ -244,6 +244,9 @@ const UserList: React.FC = () => {
         open={resetPasswordVisible}
         onOpenChange={setResetPasswordVisible}
         onFinish={handleResetPasswordSubmit}
+        modalProps={{
+          forceRender: true,
+        }}
       >
         <ProFormText.Password
           name="new_password"

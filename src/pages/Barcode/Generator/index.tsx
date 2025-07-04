@@ -91,7 +91,7 @@ const BarcodeGenerator: React.FC = () => {
     history.push('/product-management/products');
   };
 
-  // 跳转到扫码查询页面
+  // 跳转到SKU查询页面
   const handleGoToScanner = () => {
     history.push('/product-management/scanner');
   };
@@ -287,7 +287,7 @@ const BarcodeGenerator: React.FC = () => {
       subTitle="生成商品条形码，支持打印和下载"
       extra={[
         <Button key="scanner" type="primary" onClick={handleGoToScanner}>
-          扫码查询
+          SKU查询
         </Button>,
       ]}
     >

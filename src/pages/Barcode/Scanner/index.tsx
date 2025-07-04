@@ -1,4 +1,4 @@
-import { getProductList, queryProduct } from '@/services/erp/product';
+import { queryProduct } from '@/services/erp/product';
 import { ImageProcessor } from '@/utils/oss-upload';
 import { ClearOutlined, ScanOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
@@ -43,7 +43,7 @@ const BarcodeScanner: React.FC = () => {
 
     setLoading(true);
     try {
-      // 首先尝试使用新的查询接口
+      // 使用SKU查询接口
       let product: API.Product | null = null;
 
       try {
@@ -53,26 +53,7 @@ const BarcodeScanner: React.FC = () => {
           product = response.data;
         }
       } catch (error) {
-        console.log('新查询接口失败，回退到列表查询');
-      }
-
-      // 如果新接口没有找到，回退到原来的列表查询方式
-      if (!product) {
-        const response = await getProductList({
-          page: 1,
-          page_size: 1000,
-        });
-
-        if (response.success && response.data?.items) {
-          // 搜索匹配的商品
-          product =
-            response.data.items.find(
-              (item) =>
-                item.sku === sku ||
-                item.product_code === sku ||
-                `${item.source?.code || ''}-${item.sku || ''}` === sku,
-            ) || null;
-        }
+        console.log('SKU查询失败:', error);
       }
 
       if (product) {
@@ -146,7 +127,7 @@ const BarcodeScanner: React.FC = () => {
   // 清空历史记录
   const handleClearHistory = () => {
     setScanHistory([]);
-    messageApi.success('扫描历史已清空');
+    messageApi.success('查询历史已清空');
     // 清空历史后重新聚焦到输入框
     setTimeout(() => {
       if (inputRef.current) {
@@ -274,19 +255,19 @@ const BarcodeScanner: React.FC = () => {
   }, [scannedSku]);
 
   return (
-    <PageContainer title="扫码查询" subTitle="使用扫码枪扫描商品条码，快速查询商品信息">
+    <PageContainer title="SKU查询" subTitle="使用扫码枪扫描商品条码或手动输入SKU，快速查询商品信息">
       <Row gutter={16}>
         {/* 左侧：扫码输入和商品信息 */}
         <Col xs={24} lg={14}>
           {/* 扫码输入区域 */}
-          <Card title="扫码输入" style={{ marginBottom: 16 }}>
+          <Card title="SKU输入" style={{ marginBottom: 16 }}>
             <Space direction="vertical" style={{ width: '100%' }}>
               <Alert
                 message="使用说明"
                 description={
                   <div>
                     <div>
-                      将扫码枪对准商品条码进行扫描，或手动输入SKU后按回车键搜索。支持SKU、商品编码、货源编码等多种格式。
+                      将扫码枪对准商品条码进行扫描，或手动输入SKU后按回车键搜索。系统将直接通过SKU查询商品信息。
                     </div>
                     <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
                       <strong>快捷键：</strong>
@@ -311,7 +292,7 @@ const BarcodeScanner: React.FC = () => {
               <Space.Compact style={{ width: '100%' }}>
                 <Input
                   ref={inputRef}
-                  placeholder="请扫描商品条码或输入SKU/商品编码..."
+                  placeholder="请扫描商品条码或输入SKU..."
                   value={scannedSku}
                   onChange={handleScanInput}
                   onKeyPress={handleScanComplete}
@@ -355,7 +336,7 @@ const BarcodeScanner: React.FC = () => {
               {loading && (
                 <Alert
                   message="正在查询..."
-                  description="正在使用新接口查询商品信息，请稍候..."
+                  description="正在通过SKU查询商品信息，请稍候..."
                   type="info"
                   showIcon
                   style={{ marginTop: 8 }}
@@ -364,7 +345,7 @@ const BarcodeScanner: React.FC = () => {
             </Space>
           </Card>
           <Card
-            title="扫描历史"
+            title="查询历史"
             extra={
               scanHistory.length > 0 && (
                 <Space>
@@ -388,9 +369,9 @@ const BarcodeScanner: React.FC = () => {
                       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                       const link = document.createElement('a');
                       link.href = URL.createObjectURL(blob);
-                      link.download = `扫描历史_${new Date().toLocaleDateString()}.csv`;
+                      link.download = `查询历史_${new Date().toLocaleDateString()}.csv`;
                       link.click();
-                      messageApi.success('扫描历史已导出');
+                      messageApi.success('查询历史已导出');
                     }}
                   >
                     导出
@@ -487,7 +468,7 @@ const BarcodeScanner: React.FC = () => {
                 </div>
               </>
             ) : (
-              <Empty description="暂无扫描记录" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              <Empty description="暂无查询记录" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             )}
           </Card>
         </Col>
@@ -689,6 +670,7 @@ const BarcodeScanner: React.FC = () => {
         footer={null}
         width={800}
         title={`产品图片预览 (${imagePreviewIndex + 1}/${imagePreviewUrls.length})`}
+        forceRender={true}
       >
         <div
           style={{

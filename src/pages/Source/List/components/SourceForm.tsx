@@ -90,6 +90,7 @@ const SourceForm: React.FC<SourceFormProps> = ({ visible, title, source, onCance
       onFinish={handleFinish}
       modalProps={{
         maskClosable: false,
+        forceRender: true,
       }}
       width={600}
       layout="horizontal"

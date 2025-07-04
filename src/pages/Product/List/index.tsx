@@ -904,6 +904,15 @@ const ProductList: React.FC = () => {
     },
   ];
 
+  useEffect(() => {
+    if (imageComposeConfigVisible && currentConfigName) {
+      const config = ConfigManager.loadConfig(currentConfigName);
+      if (config) {
+        loadConfigToForm(config);
+      }
+    }
+  }, [imageComposeConfigVisible, currentConfigName]);
+
   return (
     <PageContainer>
       <ProTable<API.Product>
@@ -1072,6 +1081,7 @@ const ProductList: React.FC = () => {
         width={600}
         okText="确认配置"
         cancelText="取消"
+        forceRender={true}
       >
         <Form
           form={processConfigForm}
@@ -1207,6 +1217,7 @@ const ProductList: React.FC = () => {
         width={600}
         okText="确认配置"
         cancelText="取消"
+        forceRender={true}
       >
         <Form
           form={composeConfigForm}
@@ -1222,6 +1233,7 @@ const ProductList: React.FC = () => {
             priceY: undefined,
             priceFontSize: 24,
             priceColor: '#ff4d4f',
+            priceFontFamily: 'Arial',
             priceBackgroundColor: 'transparent',
             pricePadding: 0,
             priceBorderRadius: 0,
@@ -1261,7 +1273,7 @@ const ProductList: React.FC = () => {
 
               {/* 文字样式配置 */}
               <Form.Item label="文字字体" name="priceFontFamily">
-                <Select defaultValue="Arial">
+                <Select>
                   <Select.Option value="Arial">Arial</Select.Option>
                   <Select.Option value="Helvetica">Helvetica</Select.Option>
                   <Select.Option value="Times New Roman">Times New Roman</Select.Option>
@@ -1292,26 +1304,27 @@ const ProductList: React.FC = () => {
                 {({ getFieldValue }) =>
                   getFieldValue('useFrame') ? (
                     <div style={{ marginLeft: 24 }}>
-                      <Form.Item label="上传图框图片" required>
-                        <Upload
-                          accept="image/*"
-                          beforeUpload={handleFrameImageUpload}
-                          showUploadList={false}
-                        >
-                          <Button icon={<PlusOutlined />}>选择图框图片</Button>
-                        </Upload>
-                        {frameImageUrl && (
-                          <div style={{ marginTop: 8 }}>
-                            <Image
-                              src={frameImageUrl}
-                              alt="图框预览"
-                              width={100}
-                              height={100}
-                              style={{ objectFit: 'cover', borderRadius: 4 }}
-                            />
-                          </div>
-                        )}
-                      </Form.Item>
+                      <div style={{ marginBottom: 8, fontWeight: 500 }}>
+                        上传图框图片 <span style={{ color: '#ff4d4f' }}>*</span>
+                      </div>
+                      <Upload
+                        accept="image/*"
+                        beforeUpload={handleFrameImageUpload}
+                        showUploadList={false}
+                      >
+                        <Button icon={<PlusOutlined />}>选择图框图片</Button>
+                      </Upload>
+                      {frameImageUrl && (
+                        <div style={{ marginTop: 8 }}>
+                          <Image
+                            src={frameImageUrl}
+                            alt="图框预览"
+                            width={100}
+                            height={100}
+                            style={{ objectFit: 'cover', borderRadius: 4 }}
+                          />
+                        </div>
+                      )}
                     </div>
                   ) : null
                 }
@@ -1321,32 +1334,31 @@ const ProductList: React.FC = () => {
             {/* 右排：位置预览和配置管理 */}
             <div style={{ flex: 1 }}>
               {/* 位置预览 */}
-              <Form.Item label="位置预览">
-                <div
-                  style={{
-                    width: 200,
-                    height: 200,
-                    border: '1px solid #d9d9d9',
-                    borderRadius: 4,
-                    position: 'relative',
-                    backgroundColor: '#f5f5f5',
-                    margin: '0 auto',
-                  }}
-                >
-                  <Form.Item noStyle shouldUpdate>
-                    {() => (
-                      <PricePositionPreview
-                        position={composeConfigForm.getFieldValue('pricePosition')}
-                        x={composeConfigForm.getFieldValue('priceX')}
-                        y={composeConfigForm.getFieldValue('priceY')}
-                        fontSize={composeConfigForm.getFieldValue('priceFontSize') || 24}
-                        color={composeConfigForm.getFieldValue('priceColor') || '#ff4d4f'}
-                        fontFamily={composeConfigForm.getFieldValue('priceFontFamily') || 'Arial'}
-                      />
-                    )}
-                  </Form.Item>
-                </div>
-              </Form.Item>
+              <div style={{ marginBottom: 8, fontWeight: 500 }}>位置预览</div>
+              <div
+                style={{
+                  width: 200,
+                  height: 200,
+                  border: '1px solid #d9d9d9',
+                  borderRadius: 4,
+                  position: 'relative',
+                  backgroundColor: '#f5f5f5',
+                  margin: '0 auto',
+                }}
+              >
+                <Form.Item noStyle shouldUpdate>
+                  {() => (
+                    <PricePositionPreview
+                      position={composeConfigForm.getFieldValue('pricePosition')}
+                      x={composeConfigForm.getFieldValue('priceX')}
+                      y={composeConfigForm.getFieldValue('priceY')}
+                      fontSize={composeConfigForm.getFieldValue('priceFontSize') || 24}
+                      color={composeConfigForm.getFieldValue('priceColor') || '#ff4d4f'}
+                      fontFamily={composeConfigForm.getFieldValue('priceFontFamily') || 'Arial'}
+                    />
+                  )}
+                </Form.Item>
+              </div>
 
               {/* 配置管理 */}
               <Form.Item label="配置名称" name="configName">
@@ -1361,11 +1373,13 @@ const ProductList: React.FC = () => {
               </div>
 
               {configList.length > 0 && (
-                <Form.Item label="快速加载配置">
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ marginBottom: 8, fontWeight: 500 }}>快速加载配置</div>
                   <Select
                     placeholder="选择要加载的配置"
                     onChange={handleLoadConfig}
                     style={{ width: '100%' }}
+                    value={currentConfigName}
                   >
                     {configList.map((name) => (
                       <Select.Option key={name} value={name}>
@@ -1373,7 +1387,7 @@ const ProductList: React.FC = () => {
                       </Select.Option>
                     ))}
                   </Select>
-                </Form.Item>
+                </div>
               )}
             </div>
           </div>
@@ -1387,6 +1401,7 @@ const ProductList: React.FC = () => {
         onCancel={() => setConfigManagementVisible(false)}
         footer={null}
         width={800}
+        forceRender={true}
       >
         <div>
           <h3>已保存的配置</h3>
@@ -1449,6 +1464,7 @@ const ProductList: React.FC = () => {
         footer={null}
         width={800}
         title={`产品图片预览 (${imagePreviewIndex + 1}/${imagePreviewUrls.length})`}
+        forceRender={true}
       >
         <div
           style={{

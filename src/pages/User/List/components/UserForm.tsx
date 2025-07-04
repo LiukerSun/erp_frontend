@@ -58,6 +58,9 @@ const UserForm: React.FC<UserFormProps> = ({
       onOpenChange={onVisibleChange}
       onFinish={handleSubmit}
       initialValues={user || { role: 'user', is_active: true }}
+      modalProps={{
+        forceRender: true,
+      }}
     >
       <ProFormText
         name="username"

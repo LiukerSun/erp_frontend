@@ -285,8 +285,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
       onFinish={handleSubmit}
       key={product?.id || 'new'}
       modalProps={{
-        destroyOnClose: true,
         maskClosable: false,
+        forceRender: true,
       }}
       request={async () => {
         // 如果是编辑模式且有产品ID，则获取最新详情

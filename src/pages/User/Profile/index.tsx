@@ -132,6 +132,7 @@ const UserProfile: React.FC = () => {
           passwordForm.resetFields();
         }}
         footer={null}
+        forceRender={true}
       >
         <Form form={passwordForm} onFinish={handleChangePassword} layout="vertical">
           <Form.Item

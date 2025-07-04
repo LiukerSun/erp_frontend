@@ -69,17 +69,6 @@ export default [
         path: '/product-management/colors',
         component: './Color/List',
       },
-      {
-        name: 'barcode-generator',
-        path: '/product-management/barcode',
-        component: './Barcode/Generator',
-        hideInMenu: true,
-      },
-      {
-        name: 'barcode-scanner',
-        path: '/product-management/scanner',
-        component: './Barcode/Scanner',
-      },
     ],
   },
   {
@@ -99,11 +88,28 @@ export default [
     ],
   },
   {
-    path: '/websocket',
-    name: 'websocket',
-    icon: 'ApiOutlined',
-    component: './WebSocket',
+    path: '/barcode-management',
+    name: 'barcode-management',
+    icon: 'barcode',
+    routes: [
+      {
+        path: '/barcode-management',
+        redirect: '/barcode-management/generator',
+      },
+      {
+        name: 'barcode-generator',
+        path: '/barcode-management/generator',
+        component: './Barcode/Generator',
+        hideInMenu: true,
+      },
+      {
+        name: 'barcode-scanner',
+        path: '/barcode-management/scanner',
+        component: './Barcode/Scanner',
+      },
+    ],
   },
+
   // 个人资料页面，不在左侧菜单显示
   {
     path: '/account/center',
