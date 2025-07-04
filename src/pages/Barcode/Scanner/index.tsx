@@ -170,6 +170,21 @@ const BarcodeScanner: React.FC = () => {
     setImagePreviewVisible(false);
   };
 
+  // 监听当前产品变化，自动更新预览窗口的图片
+  useEffect(() => {
+    if (imagePreviewVisible && currentProduct) {
+      if (currentProduct.images && currentProduct.images.length > 0) {
+        const urls = currentProduct.images.map((img) => img.url);
+        setImagePreviewUrls(urls);
+        setImagePreviewIndex(0); // 重置到第一张图片
+      } else {
+        // 如果新产品没有图片，关闭预览窗口
+        setImagePreviewVisible(false);
+        messageApi.info('新产品没有图片，已关闭预览窗口');
+      }
+    }
+  }, [currentProduct, imagePreviewVisible]);
+
   // 页面加载时聚焦到输入框
   useEffect(() => {
     if (inputRef.current) {
@@ -262,40 +277,13 @@ const BarcodeScanner: React.FC = () => {
           {/* 扫码输入区域 */}
           <Card title="SKU输入" style={{ marginBottom: 16 }}>
             <Space direction="vertical" style={{ width: '100%' }}>
-              <Alert
-                message="使用说明"
-                description={
-                  <div>
-                    <div>
-                      将扫码枪对准商品条码进行扫描，或手动输入SKU后按回车键搜索。系统将直接通过SKU查询商品信息。
-                    </div>
-                    <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
-                      <strong>快捷键：</strong>
-                      <br />• Enter: 搜索商品
-                      <br />• Ctrl/Cmd + Enter: 手动搜索
-                      <br />• Ctrl/Cmd + K: 清空当前显示
-                      <br />• Ctrl/Cmd + L: 清空历史记录
-                    </div>
-                    <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
-                      <strong>自动聚焦：</strong>
-                      <br />• 输入框会自动保持焦点，方便连续扫描
-                      <br />• 点击🔒/🔓按钮可切换自动聚焦功能
-                      <br />• 当需要操作其他元素时，可暂时禁用自动聚焦
-                    </div>
-                  </div>
-                }
-                type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
-              />
-
               <Space.Compact style={{ width: '100%' }}>
                 <Input
                   ref={inputRef}
                   placeholder="请扫描商品条码或输入SKU..."
                   value={scannedSku}
                   onChange={handleScanInput}
-                  onKeyPress={handleScanComplete}
+                  onKeyDown={handleScanComplete}
                   prefix={<ScanOutlined />}
                   size="large"
                   style={{ flex: 1 }}
