@@ -7,7 +7,6 @@ import { ImageExporter, ProductComposeItem, ProductImageExportItem } from '@/uti
 import { ImageComposeConfigOptions, ImageProcessOptions } from '@/utils/image-processor';
 import { ImageProcessor as OSSImageProcessor } from '@/utils/oss-upload';
 import {
-  BarcodeOutlined,
   DownloadOutlined,
   DownOutlined,
   PictureOutlined,
@@ -16,7 +15,6 @@ import {
 } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
-import { history } from '@umijs/max';
 import {
   Button,
   Dropdown,
@@ -191,20 +189,6 @@ const ProductList: React.FC = () => {
     } catch (error) {
       message.error('删除失败，请重试');
     }
-  };
-
-  // 生成条形码
-  const handleGenerateBarcode = () => {
-    if (selectedRows.length === 0) {
-      message.warning('请先选择要生成条形码的产品');
-      return;
-    }
-
-    // 将选中的产品数据存储到localStorage
-    localStorage.setItem('selectedProductsForBarcode', JSON.stringify(selectedRows));
-
-    // 跳转到条形码生成器页面
-    history.push('/product-management/barcode?from=product-list');
   };
 
   // 打开图片处理配置
@@ -943,15 +927,6 @@ const ProductList: React.FC = () => {
           },
         }}
         toolBarRender={() => [
-          <Button
-            key="barcode"
-            type="primary"
-            icon={<BarcodeOutlined />}
-            onClick={handleGenerateBarcode}
-            disabled={selectedRows.length === 0}
-          >
-            生成条形码 ({selectedRows.length})
-          </Button>,
           <Button
             key="exportImages"
             icon={<PictureOutlined />}

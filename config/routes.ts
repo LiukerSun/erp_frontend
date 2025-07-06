@@ -94,13 +94,7 @@ export default [
     routes: [
       {
         path: '/barcode-management',
-        redirect: '/barcode-management/generator',
-      },
-      {
-        name: 'barcode-generator',
-        path: '/barcode-management/generator',
-        component: './Barcode/Generator',
-        hideInMenu: true,
+        redirect: '/barcode-management/scanner',
       },
       {
         name: 'barcode-scanner',
