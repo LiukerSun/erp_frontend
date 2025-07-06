@@ -120,9 +120,6 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ children }) =
 
   const menuItems = [
     {
-      type: 'divider' as const,
-    },
-    {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: '退出登录',
