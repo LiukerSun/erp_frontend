@@ -800,6 +800,31 @@ const ProductList: React.FC = () => {
       ),
     },
     {
+      title: '标签',
+      dataIndex: 'tags',
+      width: 150,
+      search: false,
+      render: (_, record) => (
+        <Space wrap>
+          {record.tags?.map((tag) => (
+            <Tag
+              key={tag.id}
+              color={tag.color}
+              style={{
+                backgroundColor: tag.color,
+                color: '#fff',
+                border: `1px solid ${tag.color}`,
+                padding: '4px 8px',
+                fontSize: '12px',
+              }}
+            >
+              {tag.name}
+            </Tag>
+          ))}
+        </Space>
+      ),
+    },
+    {
       title: '货源',
       dataIndex: 'source_id',
       width: 120,
@@ -915,6 +940,7 @@ const ProductList: React.FC = () => {
             sku: { show: true },
             price: { show: true },
             colors: { show: true },
+            tags: { show: true },
             source_id: { show: true },
             is_enabled: { show: true },
             option: { show: true, fixed: 'right' },

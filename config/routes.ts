@@ -88,6 +88,22 @@ export default [
     ],
   },
   {
+    path: '/tags-management',
+    name: 'tags-management',
+    icon: 'tags',
+    routes: [
+      {
+        path: '/tags-management',
+        redirect: '/tags-management/list',
+      },
+      {
+        name: 'tags-list',
+        path: '/tags-management/list',
+        component: './Tags/List',
+      },
+    ],
+  },
+  {
     path: '/barcode-management',
     name: 'barcode-management',
     icon: 'barcode',

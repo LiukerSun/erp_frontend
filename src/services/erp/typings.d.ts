@@ -100,6 +100,9 @@ declare namespace API {
   type ProductTag = {
     id: number;
     name: string;
+    description?: string;
+    color: string;
+    is_enabled: boolean;
     createdAt: string;
     updatedAt: string;
     deletedAt?: string;
@@ -186,6 +189,7 @@ declare namespace API {
     shipping_time?: string;
     images?: ProductImage[]; // 商品图片列表
     colors?: string[];
+    tags?: number[]; // 标签ID数组
   };
 
   // 更新商品请求
@@ -284,4 +288,28 @@ declare namespace API {
 
   // 清空查询历史响应
   type ClearQueryHistoryResponse = string;
+
+  // 标签信息
+  type Tag = {
+    id: number;
+    name: string;
+    description?: string;
+    color: string;
+    is_enabled: boolean;
+    products?: Product[];
+    createdAt: string;
+    updatedAt: string;
+    deletedAt?: string;
+  };
+
+  // 创建标签请求
+  type CreateTagRequest = {
+    name: string;
+    description?: string;
+    color: string;
+    is_enabled?: boolean;
+  };
+
+  // 更新标签请求
+  type UpdateTagRequest = CreateTagRequest;
 }

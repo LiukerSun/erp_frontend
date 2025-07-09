@@ -9,6 +9,8 @@ export default {
   'menu.product-management': '商品管理',
   'menu.product-management.product-list': '商品列表',
   'menu.product-management.color-list': '颜色管理',
+  'menu.tags-management': '标签管理',
+  'menu.tags-management.tags-list': '标签列表',
   'menu.barcode-management': '条形码管理',
   'menu.barcode-management.barcode-generator': '条形码生成器',
   'menu.barcode-management.barcode-scanner': '扫码查询',

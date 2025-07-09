@@ -1,5 +1,6 @@
 import { createProduct, getAllColors, getProduct, updateProduct } from '@/services/erp/product';
 import { getActiveSourceList } from '@/services/erp/source';
+import { getEnabledTags } from '@/services/erp/tags';
 import { ossUploader } from '@/utils/oss-upload';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import {
@@ -9,7 +10,7 @@ import {
   ProFormSwitch,
   ProFormText,
 } from '@ant-design/pro-components';
-import { Button, Col, message, Popconfirm, Row, Upload } from 'antd';
+import { Button, Col, message, Popconfirm, Row, Tag, Upload } from 'antd';
 import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import React, { useEffect, useState } from 'react';
 
@@ -30,6 +31,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 }) => {
   const [colors, setColors] = useState<API.Color[]>([]);
   const [sources, setSources] = useState<API.Source[]>([]);
+  const [tags, setTags] = useState<API.Tag[]>([]);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   // 获取所有颜色
@@ -56,6 +58,18 @@ const ProductForm: React.FC<ProductFormProps> = ({
     }
   };
 
+  // 获取启用的标签
+  const fetchEnabledTags = async () => {
+    try {
+      const response = await getEnabledTags();
+      if (response.success) {
+        setTags(response.data || []);
+      }
+    } catch (error) {
+      console.error('获取标签失败:', error);
+    }
+  };
+
   // 初始化图片列表
   const initializeImages = (images?: API.ProductImage[]) => {
     if (!images || images.length === 0) {
@@ -79,6 +93,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
     if (visible) {
       fetchColors();
       fetchActiveSources();
+      fetchEnabledTags();
 
       // 阻止Upload组件的默认下载行为
       const preventDownload = (e: Event) => {
@@ -205,6 +220,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
               })
               .filter((name: string) => name && name.trim() !== '')
           : [], // 提交颜色名称数组
+        tags: Array.isArray(values.tags) ? values.tags : [], // 提交标签ID数组
         images: images,
       };
 
@@ -264,6 +280,18 @@ const ProductForm: React.FC<ProductFormProps> = ({
     value: source.id,
   }));
 
+  // 构建标签选项（带颜色显示）
+  const tagOptions = tags.map((tag) => ({
+    label: (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Tag color={tag.color} style={{ margin: 0 }}>
+          {tag.name}
+        </Tag>
+      </div>
+    ),
+    value: tag.id,
+  }));
+
   const getDefaultValues = () => ({
     name: '',
     sku: '',
@@ -275,6 +303,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
     source_id: undefined,
     shipping_time: '',
     colors: [],
+    tags: [],
   });
 
   return (
@@ -309,6 +338,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     }
                     return color;
                   }) || [],
+                tags: response.data.tags?.map((tag: any) => tag.id) || [],
               };
             } else {
               message.error(response.message || '获取产品详情失败');
@@ -431,6 +461,19 @@ const ProductForm: React.FC<ProductFormProps> = ({
             allowClear
             fieldProps={{
               tokenSeparators: [','],
+            }}
+          />
+
+          <ProFormSelect
+            name="tags"
+            label="商品标签"
+            placeholder="请选择商品标签"
+            mode="multiple"
+            options={tagOptions}
+            allowClear
+            fieldProps={{
+              maxTagCount: 3,
+              maxTagTextLength: 10,
             }}
           />
 
