@@ -5,9 +5,8 @@ const API_PATHS = {
   USER: '/api/user',
   PRODUCT: '/api/product',
   SOURCE: '/api/source',
-  TAG: '/api/tag',
-  COLOR: '/api/color',
-  OSS: '/api/oss',
+  TAG: '/api/tags',
+  OSS: '/oss',
 } as const;
 
 // 通用CRUD操作
@@ -90,8 +89,8 @@ export const tagApi = {
     }),
 };
 
-// 颜色相关API
-export const colorApi = createCrudApi<API.Color>(API_PATHS.COLOR);
+// 颜色相关API - 根据swagger.json，颜色API在product路径下
+export const colorApi = createCrudApi<API.Color>(`${API_PATHS.PRODUCT}/colors`);
 
 // OSS相关API
 export const ossApi = {

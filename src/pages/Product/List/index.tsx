@@ -33,6 +33,7 @@ import {
 } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import ProductForm from './components/ProductForm';
+import ProductTagManager from './components/ProductTagManager';
 
 const ProductList: React.FC = () => {
   const actionRef = useRef<ActionType>();
@@ -62,6 +63,12 @@ const ProductList: React.FC = () => {
   const [configList, setConfigList] = useState<string[]>([]);
   const [currentConfigName, setCurrentConfigName] = useState<string>('');
   const [configManagementVisible, setConfigManagementVisible] = useState(false);
+
+  // 标签管理
+  const [tagManagerVisible, setTagManagerVisible] = useState(false);
+  const [currentProductForTag, setCurrentProductForTag] = useState<API.Product | undefined>(
+    undefined,
+  );
 
   // 获取筛选数据
   useEffect(() => {
@@ -538,6 +545,17 @@ const ProductList: React.FC = () => {
     actionRef.current?.reload();
   };
 
+  // 打开标签管理
+  const handleOpenTagManager = (record: API.Product) => {
+    setCurrentProductForTag(record);
+    setTagManagerVisible(true);
+  };
+
+  // 标签管理成功回调
+  const handleTagManagerSuccess = () => {
+    actionRef.current?.reload();
+  };
+
   // 打开图片预览
   const handleImagePreview = (images: API.ProductImage[], startIndex: number = 0) => {
     const urls = images.map((img) => img.url);
@@ -897,6 +915,9 @@ const ProductList: React.FC = () => {
         <Button key="edit" type="link" size="small" onClick={() => handleEdit(record)}>
           编辑
         </Button>,
+        <Button key="tags" type="link" size="small" onClick={() => handleOpenTagManager(record)}>
+          标签
+        </Button>,
         <Popconfirm
           key="delete"
           title="确定要删除这个产品吗？"
@@ -1071,6 +1092,13 @@ const ProductList: React.FC = () => {
         product={currentProduct}
         onSuccess={handleFormSuccess}
         onVisibleChange={setProductFormVisible}
+      />
+
+      <ProductTagManager
+        visible={tagManagerVisible}
+        product={currentProductForTag}
+        onCancel={() => setTagManagerVisible(false)}
+        onSuccess={handleTagManagerSuccess}
       />
 
       {/* 图片处理配置弹窗 */}

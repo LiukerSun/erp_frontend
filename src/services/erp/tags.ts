@@ -95,3 +95,12 @@ export async function removeProductFromTag(
     ...(options || {}),
   });
 }
+
+/** 获取产品的标签 GET /api/tags/product */
+export async function getProductTags(productId: number, options?: { [key: string]: any }) {
+  return request<API.BaseResponse<API.Tag[]>>(`/api/tags/product`, {
+    method: 'GET',
+    params: { product_id: productId },
+    ...(options || {}),
+  });
+}
