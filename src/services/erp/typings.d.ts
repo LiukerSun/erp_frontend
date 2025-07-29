@@ -263,6 +263,21 @@ declare namespace API {
   // 更新颜色请求
   type UpdateColorRequest = CreateColorRequest;
 
+  // 批量更新供应商请求
+  type BatchUpdateSourceRequest = {
+    product_ids: number[];
+    source_id: number;
+  };
+
+  // 批量更新供应商响应
+  type BatchUpdateSourceResponse = {
+    updated_count: number;
+    failed_products: {
+      product_id: number;
+      error: string;
+    }[];
+  };
+
   // 阿里云STS Token
   type StsToken = {
     accessKeyId: string;

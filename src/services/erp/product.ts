@@ -98,6 +98,21 @@ export async function getAllColors(options?: { [key: string]: any }) {
   });
 }
 
+/** 批量更新商品供应商 PUT /api/product/batch/source */
+export async function batchUpdateSource(
+  body: API.BatchUpdateSourceRequest,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponse<API.BatchUpdateSourceResponse>>('/api/product/batch/source', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
 /** 清空查询历史 DELETE /api/product/query/history */
 export async function clearQueryHistory(options?: { [key: string]: any }) {
   return request<API.BaseResponse<API.ClearQueryHistoryResponse>>('/api/product/query/history', {

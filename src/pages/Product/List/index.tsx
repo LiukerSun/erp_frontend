@@ -1,5 +1,10 @@
 import PricePositionPreview from '@/components/PricePositionPreview';
-import { deleteProduct, getAllColors, getProductList } from '@/services/erp/product';
+import {
+  batchUpdateSource,
+  deleteProduct,
+  getAllColors,
+  getProductList,
+} from '@/services/erp/product';
 import { getActiveSourceList } from '@/services/erp/source';
 import { ConfigManager, ImageComposeConfig } from '@/utils/config-manager';
 import { exportProductListToExcel, generateExportMenuItems } from '@/utils/excel-export';
@@ -63,6 +68,9 @@ const ProductList: React.FC = () => {
   const [configList, setConfigList] = useState<string[]>([]);
   const [currentConfigName, setCurrentConfigName] = useState<string>('');
   const [configManagementVisible, setConfigManagementVisible] = useState(false);
+  // 批量修改供应商
+  const [batchUpdateSourceVisible, setBatchUpdateSourceVisible] = useState(false);
+  const [batchUpdateSourceForm] = Form.useForm();
 
   // 标签管理
   const [tagManagerVisible, setTagManagerVisible] = useState(false);
@@ -380,6 +388,93 @@ const ProductList: React.FC = () => {
     };
     reader.readAsDataURL(file);
     return false; // 阻止自动上传
+  };
+
+  // 打开批量修改供应商弹窗
+  const handleOpenBatchUpdateSource = () => {
+    if (selectedRows.length === 0) {
+      message.warning('请先选择要修改供应商的产品');
+      return;
+    }
+    setBatchUpdateSourceVisible(true);
+    batchUpdateSourceForm.resetFields();
+  };
+
+  // 执行批量修改供应商
+  const handleBatchUpdateSource = async () => {
+    try {
+      const values = await batchUpdateSourceForm.validateFields();
+
+      // 获取选中供应商的信息
+      const selectedSource = sources.find((source) => source.id === values.source_id);
+      const productIds = selectedRows.map((product) => product.id);
+
+      // 二次确认
+      Modal.confirm({
+        title: '确认批量修改供应商',
+        content: (
+          <div>
+            <p>
+              确定要将选中的 <strong>{selectedRows.length}</strong> 个产品的供应商修改为：
+            </p>
+            <p style={{ fontWeight: 'bold', color: '#1890ff' }}>
+              {selectedSource?.name} ({selectedSource?.code})
+            </p>
+            <p style={{ color: '#666', fontSize: '14px' }}>此操作不可撤销，请谨慎操作。</p>
+          </div>
+        ),
+        onOk: async () => {
+          try {
+            const response = await batchUpdateSource({
+              product_ids: productIds,
+              source_id: values.source_id,
+            });
+
+            if (response.success) {
+              const { updated_count, failed_products } = response.data;
+
+              if (failed_products && failed_products.length > 0) {
+                // 部分成功的情况
+                Modal.info({
+                  title: '批量修改完成',
+                  content: (
+                    <div>
+                      <p>成功修改 {updated_count} 个产品的供应商</p>
+                      <p>失败 {failed_products.length} 个产品：</p>
+                      <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 8 }}>
+                        {failed_products.map((item, index) => (
+                          <div key={index} style={{ fontSize: '12px', color: '#666' }}>
+                            产品ID {item.product_id}: {item.error}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ),
+                });
+              } else {
+                message.success(`成功修改 ${updated_count} 个产品的供应商`);
+              }
+
+              setBatchUpdateSourceVisible(false);
+              batchUpdateSourceForm.resetFields();
+              setSelectedRowKeys([]);
+              setSelectedRows([]);
+              actionRef.current?.reload();
+            } else {
+              message.error(response.message || '批量修改供应商失败');
+            }
+          } catch (error) {
+            console.error('批量修改供应商失败:', error);
+            message.error('批量修改供应商失败，请重试');
+          }
+        },
+        okText: '确认修改',
+        cancelText: '取消',
+        okType: 'primary',
+      });
+    } catch (error) {
+      console.error('表单验证失败:', error);
+    }
   };
 
   // 导出产品图片
@@ -975,6 +1070,14 @@ const ProductList: React.FC = () => {
         }}
         toolBarRender={() => [
           <Button
+            key="batchUpdateSource"
+            icon={<SettingOutlined />}
+            onClick={handleOpenBatchUpdateSource}
+            disabled={selectedRows.length === 0}
+          >
+            批量修改供应商 ({selectedRows.length})
+          </Button>,
+          <Button
             key="exportImages"
             icon={<PictureOutlined />}
             onClick={handleExportImages}
@@ -1013,6 +1116,13 @@ const ProductList: React.FC = () => {
           </Dropdown>,
           <Button key="add" type="primary" onClick={handleAdd}>
             新增产品
+          </Button>,
+          <Button
+            key="batchUpdateSource"
+            icon={<SettingOutlined />}
+            onClick={handleOpenBatchUpdateSource}
+          >
+            批量修改供应商
           </Button>,
         ]}
         scroll={{ x: 1600 }}
@@ -1485,6 +1595,98 @@ const ProductList: React.FC = () => {
             </div>
           )}
         </div>
+      </Modal>
+
+      {/* 批量修改供应商弹窗 */}
+      <Modal
+        title="批量修改供应商"
+        open={batchUpdateSourceVisible}
+        onOk={handleBatchUpdateSource}
+        onCancel={() => setBatchUpdateSourceVisible(false)}
+        width={700}
+        okText="确认修改"
+        cancelText="取消"
+        forceRender={true}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontWeight: 'bold', marginBottom: 8 }}>
+            将要修改的产品 ({selectedRows.length} 个)：
+          </div>
+          <div
+            style={{
+              maxHeight: 200,
+              overflowY: 'auto',
+              border: '1px solid #d9d9d9',
+              borderRadius: 4,
+              padding: 8,
+              backgroundColor: '#fafafa',
+            }}
+          >
+            {selectedRows.map((product, index) => (
+              <div
+                key={product.id}
+                style={{
+                  padding: '4px 0',
+                  borderBottom: index < selectedRows.length - 1 ? '1px solid #f0f0f0' : 'none',
+                  fontSize: '14px',
+                }}
+              >
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <div>
+                    <span style={{ fontWeight: 500 }}>{product.name}</span>
+                    <span style={{ color: '#666', marginLeft: 8 }}>SKU: {product.sku}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#999' }}>
+                    当前供应商: {product.source?.name || '无'}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Form
+          form={batchUpdateSourceForm}
+          layout="vertical"
+          initialValues={{
+            source_id: undefined,
+          }}
+        >
+          <Form.Item
+            label="选择新供应商"
+            name="source_id"
+            rules={[{ required: true, message: '请选择新供应商' }]}
+          >
+            <Select
+              placeholder="请选择新供应商"
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+              }
+            >
+              {sources.map((source) => (
+                <Select.Option key={source.id} value={source.id}>
+                  {source.name} ({source.code})
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <div
+            style={{
+              padding: '12px',
+              backgroundColor: '#f6ffed',
+              border: '1px solid #b7eb8f',
+              borderRadius: 4,
+              fontSize: '14px',
+              color: '#52c41a',
+            }}
+          >
+            <strong>提示：</strong>此操作将把选中的所有产品的供应商修改为新选择的供应商。
+          </div>
+        </Form>
       </Modal>
 
       <Modal
