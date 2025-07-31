@@ -1070,14 +1070,6 @@ const ProductList: React.FC = () => {
         }}
         toolBarRender={() => [
           <Button
-            key="batchUpdateSource"
-            icon={<SettingOutlined />}
-            onClick={handleOpenBatchUpdateSource}
-            disabled={selectedRows.length === 0}
-          >
-            批量修改供应商 ({selectedRows.length})
-          </Button>,
-          <Button
             key="exportImages"
             icon={<PictureOutlined />}
             onClick={handleExportImages}
